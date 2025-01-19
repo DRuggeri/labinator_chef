@@ -1,0 +1,52 @@
+apiVersion: v1alpha1
+kind: TrustedRootsConfig
+name: boss-root
+certificates: |-
+<%= File.readlines('/etc/ssl/certs/root_ca.crt').map{|l| "  #{l}"}.join('') %>
+
+---
+machine:
+  network:
+    nameservers:
+      - <%= @network['dns'] %>
+    extraHostEntries:
+<%- @nodes.each do |name,n| %>
+      - ip: <%= n['ip'] %>
+        aliases:
+          - <%= name %>
+          - <%= name %>.local
+<% end %>
+  features:
+    hostDNS:
+      enabled: true
+      resolveMemberNames: true
+  time:
+    disabled: false
+    servers:
+      - <%= @network['ntp'] %>
+  registries:
+    mirrors:
+      docker.io:
+        endpoints:
+          - https://<%= @network['mirror_endpoint'] %>
+      gcr.io:
+        endpoints:
+          - https://<%= @network['mirror_endpoint'] %>
+      ghcr.io:
+        endpoints:
+          - https://<%= @network['mirror_endpoint'] %>
+      registry.k8s.io:
+        endpoints:
+          - https://<%= @network['mirror_endpoint'] %>
+      quay.k8s.io:
+        endpoints:
+          - https://<%= @network['mirror_endpoint'] %>
+cluster:
+  allowSchedulingOnControlPlanes: false
+  discovery:
+    enabled: false
+    registries:
+      kubernetes:
+        disabled: true
+      service:
+        disabled: true

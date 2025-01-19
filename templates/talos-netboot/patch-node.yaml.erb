@@ -1,0 +1,20 @@
+machine:
+  install:
+    disk: <%= @n['installdisk'] %>
+    extraKernelArgs:
+      - talos.logging.kernel=tcp://<%= @network['log_endpoint'] %>:5044/
+  logging:
+    destinations:
+      - endpoint: tcp://<%= @network['log_endpoint'] %>:5044/
+        format: json_lines
+        extraTags:
+          hostname: <%= @nodename %>
+  network:
+    hostname: <%= @nodename %>
+    interfaces:
+      - deviceSelector:
+          busPath: 0*
+        addresses: [ <%= @n['ip'] %><%= @network['cidr'] %> ]
+        routes:
+          - network: 0.0.0.0/0
+            gateway: <%= @network['gateway'] %>

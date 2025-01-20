@@ -3,6 +3,11 @@ step_cert 'otelcol' do
   group 'monitors'
 end
 
+remote_archive "https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/v#{node['labinator']['versions']['otelcol']}/otelcol-contrib_#{node['labinator']['versions']['otelcol']}_linux_amd64.tar.gz" do
+  directory '/usr/bin'
+  files 'otelcol-contrib'
+end
+
 file '/etc/monitors/otelcol.yml' do
   content <<-EOU.gsub(/^    /, '')
     receivers:
@@ -13,6 +18,52 @@ file '/etc/monitors/otelcol.yml' do
             scrape_interval: 10s
             static_configs:
             - targets: [ '127.0.0.1:8889' ]
+
+      # local log messages
+      journald:
+        start_at: end
+        priority: info
+        operators:
+        - id: severityconverter
+          type: add
+          field: attributes.level
+          value: 'EXPR(
+            let conv = {
+              "0": "emergency",
+              "1": "alert",
+              "2": "critical",
+              "3": "error",
+              "4": "warning",
+              "5": "notice",
+              "6": "info",
+              "7": "debug",
+            };
+            conv[body.PRIORITY] ?? "unknown"
+          )'
+        - id: severity_parser
+          type: severity_parser
+          parse_from: attributes.level
+          if: attributes.level != "unknown"
+          mapping:
+            fatal4: emergency
+            fatal: alert
+            error4: critical
+            error: error
+            warn: warning
+            info4: notice
+            info: info
+            debug: debug
+        - id: setservicename
+          type: add
+          field: resource.service.name
+          value: 'EXPR(body._SYSTEMD_UNIT ?? body.SYSLOG_IDENTIFIER)'
+        - type: retain
+          fields:
+          - body.PRIORITY
+          - body.SYSLOG_IDENTIFIER
+          - body.MESSAGE            
+
+      # Remote log messages
       tcplog:
         listen_address: ':5044'
         operators:
@@ -108,7 +159,21 @@ file '/etc/monitors/otelcol.yml' do
 
     processors:
       batch:
+
+      resourcedetection:
+        detectors: [ system ]
+        system:
+          hostname_sources: [ os ]
+          resource_attributes:
+            host.name:
+              enabled: true
+            os.type:
+              enabled: false
       filter:
+        logs:
+          log_record:
+          # Drop messages that are just arrays of bytes
+          - IsMatch(body["MESSAGE"], "^\\\\[")
       resource/loki:
         attributes:
         - action: insert
@@ -150,6 +215,10 @@ file '/etc/monitors/otelcol.yml' do
           receivers: [ tcplog ]
           processors: [ batch ]
           exporters: [ loki ]
+        logs/journald:
+          receivers: [ journald ]
+          processors: [ filter, resourcedetection, resource/loki, batch ]
+          exporters: [ loki ]
   EOU
 end
 
@@ -162,21 +231,7 @@ systemd_unit 'otelcol.service' do
     Requires=docker.service
 
     [Service]
-    ExecStartPre=-/usr/bin/docker stop %n
-    ExecStartPre=-/usr/bin/docker rm %n
-    ExecStart=/usr/bin/docker run --rm \\
-      --name %n \\
-      -u 1001:1001 \\
-      -p 514:514/udp \\
-      -p 601:601 \\
-      -p 5044:5044 \\
-      -p 9124:9124 \\
-      -v /etc/monitors/otelcol.yml:/etc/otelcol.yml:ro \\
-      -v /etc/ssl/certs/otelcol.pem:/etc/ssl/certs/otelcol.pem:ro \\
-      -v /etc/ssl/private/otelcol.key:/etc/ssl/private/otelcol.key:ro \\
-      -v /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro \\
-      docker.io/otel/opentelemetry-collector-contrib:#{node['labinator']['versions']['otelcol']} \\
-        --config=file:/etc/otelcol.yml
+    ExecStart=/usr/bin/otelcol-contrib --config=file:/etc/monitors/otelcol.yml
     Restart=on-failure
 
     [Install]

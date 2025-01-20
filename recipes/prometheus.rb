@@ -41,6 +41,18 @@ scrape_configs:
     static_configs:
       - targets:
         - boss:9115
+  - job_name: otelcol
+    scheme: https
+    tls_config: *tls_config
+    static_configs:
+      - targets:
+        - boss:9124
+  - job_name: grafana
+    scheme: https
+    tls_config: *tls_config
+    static_configs:
+      - targets:
+        - boss:3000
 "
   notifies :restart, 'service[prometheus]', :delayed
 end

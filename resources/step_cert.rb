@@ -77,6 +77,7 @@ systemd_unit 'cert-renewer@.service' do
   new_resource.san_names << node['hostname']
   new_resource.san_names << 'localhost'
   new_resource.san_addresses << '127.0.0.1'
+  new_resource.san_addresses << node['ipaddress']
   san_step_args = (new_resource.san_names + new_resource.san_addresses).map { |v| "--san '#{v}'" }.join(" ")
 
   file key_file do

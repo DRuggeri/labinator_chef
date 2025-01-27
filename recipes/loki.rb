@@ -110,3 +110,9 @@ end
 service 'loki' do
   action [:enable, :start]
 end
+
+
+remote_archive "https://github.com/grafana/loki/releases/download/v#{node['labinator']['versions']['loki']}/logcli-linux-amd64.zip" do
+  directory '/usr/bin'
+  files 'logcli-linux-amd64'
+end

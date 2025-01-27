@@ -64,7 +64,7 @@ action :extract do
       if files
         command += files.is_a?(String) ? [ files ] : files
       end
-      raise "cannot strip componenets from zip files" if new_resource.strip_components
+      raise "cannot strip `#{new_resource.strip_components}` componenets from zip files" if new_resource.strip_components && new_resource.strip_components != 0
     else
       raise "Do not know how to deal with the file #{local_file}"
     end

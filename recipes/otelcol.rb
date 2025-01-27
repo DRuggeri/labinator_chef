@@ -229,6 +229,7 @@ systemd_unit 'otelcol.service' do
     After=network.target
     After=docker.service
     Requires=docker.service
+    TimeoutStopSec=5
 
     [Service]
     ExecStart=/usr/bin/otelcol-contrib --config=file:/etc/monitors/otelcol.yml

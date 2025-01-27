@@ -83,5 +83,9 @@ end
 
 # dnsmasq is up - start using it immediately
 file '/etc/resolv.conf' do
-  content "nameserver #{node['labinator']['network']['dns']}"
+  content <<-EOF.gsub(/^    /, '')
+    search #{node['labinator']['network']['dns_domain']}
+    domain #{node['labinator']['network']['dns_domain']}
+    nameserver #{node['labinator']['network']['dns']}
+  EOF
 end

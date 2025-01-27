@@ -29,6 +29,14 @@ file '/etc/init.d/chef-client' do
 end
 
 [
+  'brltty'
+].each do |pkg|
+  package pkg do
+    action :remove
+  end
+end
+
+[
   'wget',              #Web client
   'curl',              #Web client
   'git',               #Duh...
@@ -58,11 +66,9 @@ end
   'yq',                #Sed... for YAML, XML, and ALSO JSON
   'ncdu',              #Disk space analyzer
   'socat',             #Telnet for local sockets
-
-  'wrk',               #HTTP load generator
-
   'dnsmasq',           #DNS, DHCP, and TFTP server
   'ipxe',              #Netboot assets (ipxe.efi and undionly.kpxe)
+  'screen',            #Serial read/write
 
   #ISO tools
   'genisoimage',
@@ -214,3 +220,6 @@ include_recipe 'labinator::talos-netboot'
 
 ##### Optional - livecd image creation
 include_recipe 'labinator::liveimage'
+
+##### Set up our desktop
+include_recipe 'labinator::desktop'

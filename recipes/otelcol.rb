@@ -103,26 +103,25 @@ file '/etc/monitors/otelcol.yml' do
         - id: removelevel
           type: remove
           field: attributes.talos-level
+
+
       syslog:
         tcp:
           listen_address: ':601'
-          tls:
-            cert_file: /etc/ssl/certs/otelcol.pem
-            key_file: /etc/ssl/private/otelcol.key
+          #tls:
+          #  cert_file: /etc/ssl/certs/otelcol.pem
+          #  key_file: /etc/ssl/private/otelcol.key
         udp:
           listen_address: ':514'
-        protocol: rfc5424
+        protocol: rfc3164
         operators:
-        - id: earlyfilter
-          type: filter
-          expr: attributes.message matches ".*(request filter log output|Log statistics).*"
         - id: killbody
           type: remove
           field: body
         - id: setresourcehost
           type: add
           field: resource.host.name
-          value: EXPR(trimSuffix(attributes.hostname, ".home.bitnebula.com"))
+          value: EXPR(trimSuffix(attributes.hostname, ".local"))
         - id: setresourceservicename
           type: copy
           from: attributes.appname
@@ -153,9 +152,9 @@ file '/etc/monitors/otelcol.yml' do
           type: move
           from: attributes.priority
           to: body.PRIORITY
-    #    - id: outputdumper
-    #      type: file_output
-    #      path: /tmp/collector.out
+        #- id: outputdumper
+        #  type: file_output
+        #  path: /tmp/collector.out
 
     processors:
       batch:
@@ -209,7 +208,7 @@ file '/etc/monitors/otelcol.yml' do
           exporters: [ prometheus ]
         logs:
           receivers: [ syslog ]
-          processors: [ resource/loki, batch ]
+          processors: [ batch, resource/loki ]
           exporters: [ loki ]
         logs/talos:
           receivers: [ tcplog ]
@@ -220,6 +219,7 @@ file '/etc/monitors/otelcol.yml' do
           processors: [ filter, resourcedetection, resource/loki, batch ]
           exporters: [ loki ]
   EOU
+  notifies :restart, "service[otelcol]", :delayed
 end
 
 systemd_unit 'otelcol.service' do

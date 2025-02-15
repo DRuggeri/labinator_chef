@@ -1,7 +1,6 @@
 
 remote_archive "https://github.com/protocolbuffers/protobuf/releases/download/v#{node['labinator']['versions']['protoc']}/protoc-#{node['labinator']['versions']['protoc']}-linux-x86_64.zip" do
-  directory '/usr/bin'
-  strip_components 1
+  directory '/usr'
   files 'bin/protoc'
 end
 

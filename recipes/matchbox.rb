@@ -47,11 +47,6 @@ service 'matchbox' do
   action [:enable, :start]
 end
 
-
-remote_archive 'https://go.dev/dl/go1.23.4.linux-amd64.tar.gz' do
-  directory '/usr/local'
-  check_interval 60 * 60 * 24 * 90
-end
   
 bash 'build bootcmd' do
   code <<-EOF

@@ -182,6 +182,15 @@ remote_archive "https://get.helm.sh/helm-v#{node['labinator']['versions']['helm'
   files '*/helm'
 end
 
+remote_archive "https://go.dev/dl/go#{node['labinator']['versions']['go']}.linux-amd64.tar.gz" do
+  directory '/usr/local'
+  check_interval 60 * 60 * 24 * 90
+end
+link '/usr/bin/go' do
+  to '/usr/local/go/bin/go'
+  link_type :symbolic
+end
+
 ##### Container image mirroring
 include_recipe 'labinator::container-images'
 

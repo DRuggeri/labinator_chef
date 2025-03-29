@@ -11,26 +11,35 @@ file '/etc/apt/preferences' do
   EOF
 end
 
-# Enable dual-monitor
-# SEE: https://wiki.archlinux.org/title/Multihead
-directory '/etc/X11/xorg.conf.d' do
+# Set up dual-monitor
+directory '/home/boss/.config/autostart' do
   recursive true
+  owner 'boss'
+  group 'boss'
 end
-file '/etc/X11/xorg.conf.d/10-monitor.conf' do
-  content <<-EOF.gsub(/^    /, '')
-    Section "Monitor"
-      Identifier  "HDMI-2"
-      Option      "Primary" "true"
-    EndSection
 
-    #Section "Monitor"
-    #  Identifier  "HDMI1"
-    #  Option      "LeftOf" "VGA1"
-    #EndSection
+file '/home/boss/.config/autostart/lxrandr-autostart.desktop' do
+  content <<-EOF.gsub(/^    /, '')
+    [Desktop Entry]
+    Type=Application
+    Name=LXRandR autostart
+    Comment=Start xrandr with settings done in LXRandR
+    Exec=sh -c 'xrandr --output HDMI-1 --mode 1024x600 --rate 60.04 --output eDP-1 --mode 1024x768 --rate 60.00 --below HDMI-1'
+    OnlyShowIn=LXDE
   EOF
 end
 
-# Set up autologin
+# Fix touchscreen input maps
+file '/home/boss/.xsessionrc' do
+  content <<-EOF.gsub(/^    /, '')
+    xinput map-to-output 10 HDMI-1
+    xinput map-to-output 11 eDP-1
+  EOF
+  owner 'boss'
+  group 'boss'
+end
+
+# Set up autologin and start VNC
 directory '/etc/lightdm'
 file '/etc/lightdm/lightdm.conf' do
   content <<-EOF.gsub(/^    /, '')
@@ -62,6 +71,7 @@ end
 
 [
   'xserver-xorg',
+  'xinput',
   'x11vnc',
   'lightdm',
   'firefox-esr',

@@ -55,7 +55,7 @@ file '/etc/monitors/otelcol.yml' do
             debug: debug
         - id: setservicename
           type: add
-          field: resource.service.name
+          field: 'resource["service.name"]'
           value: 'EXPR(body._SYSTEMD_UNIT ?? body.SYSLOG_IDENTIFIER)'
         - type: retain
           fields:
@@ -88,11 +88,11 @@ file '/etc/monitors/otelcol.yml' do
         - id: setresourcehost
           type: move
           from: attributes.hostname
-          to: resource.host.name
+          to: 'resource["host.name"]'
         - id: setresourceservicename
           type: move
           from: attributes.talos-service
-          to: resource.service.name
+          to: 'resource["service.name"]'
         - id: setmessage
           type: move
           from: attributes.msg
@@ -125,7 +125,7 @@ file '/etc/monitors/otelcol.yml' do
         - id: setresourceservicename
           type: copy
           from: attributes.appname
-          to: resource.service.name
+          to: 'resource["service.name"]'
         - id: parserouter
           type: router
           default: keeper
@@ -173,11 +173,6 @@ file '/etc/monitors/otelcol.yml' do
           log_record:
           # Drop messages that are just arrays of bytes
           - IsMatch(body["MESSAGE"], "^\\\\[")
-      resource/loki:
-        attributes:
-        - action: insert
-          key: loki.resource.labels
-          value: host.name, service.name
 
     exporters:
       prometheus:
@@ -185,21 +180,21 @@ file '/etc/monitors/otelcol.yml' do
         tls:
           cert_file: /etc/ssl/certs/otelcol.pem
           key_file: /etc/ssl/private/otelcol.key
-      loki:
-        endpoint: 'https://#{node['ipaddress']}:3100/loki/api/v1/push'
-        default_labels_enabled:
-          exporter: false
-          job: false
-          instance: false
-          level: false
+      otlphttp:
+        endpoint: https://#{node['ipaddress']}:3100/otlp
 
     service:
       telemetry:
         logs:
           level: info #debug, info, warn, error
         metrics:
-          level: normal #none, basic, normal, detailed
-          address: 127.0.0.1:8889
+          level: basic #none, basic, normal, detailed
+          readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: 127.0.0.1
+                    port: 8889
 
       pipelines:
         metrics:
@@ -208,16 +203,16 @@ file '/etc/monitors/otelcol.yml' do
           exporters: [ prometheus ]
         logs:
           receivers: [ syslog ]
-          processors: [ batch, resource/loki ]
-          exporters: [ loki ]
+          processors: [ batch ]
+          exporters: [ otlphttp ]
         logs/talos:
           receivers: [ tcplog ]
           processors: [ batch ]
-          exporters: [ loki ]
+          exporters: [ otlphttp ]
         logs/journald:
           receivers: [ journald ]
-          processors: [ filter, resourcedetection, resource/loki, batch ]
-          exporters: [ loki ]
+          processors: [ filter, resourcedetection, batch ]
+          exporters: [ otlphttp ]
   EOU
   notifies :restart, "service[otelcol]", :delayed
 end

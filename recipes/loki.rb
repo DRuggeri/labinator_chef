@@ -53,6 +53,12 @@ schema_config:
       schema: v13
       store: tsdb
 
+distributor:
+  otlp_config:
+    default_resource_attributes_as_index_labels:
+      - host.name
+      - service.name
+
 compactor:
   working_directory: /data/retention
   delete_request_store: filesystem

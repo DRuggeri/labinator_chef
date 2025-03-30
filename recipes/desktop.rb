@@ -125,6 +125,7 @@ end
   'x11vnc',
   'lightdm',
   'wmctrl',
+  'xfce4-power-manager',
   'firefox-esr',
 ].each do |name|
   package name do
@@ -147,6 +148,7 @@ systemd_unit 'x11vnc.service' do
     Restart=on-failure
     RestartSec=2
     SuccessExitStatus=3
+    TimeoutStopSec=5
 
     [Install]
     WantedBy=graphical.target

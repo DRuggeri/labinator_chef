@@ -33,6 +33,10 @@ ruby_block 'set up certs' do
   notifies :run, 'execute[update-ca-certificates]', :immediately
 end
 
+file '/etc/ssl/certs/root_ca.crt' do
+  mode '0744'
+end
+
 execute 'update-ca-certificates' do
   command '/usr/sbin/update-ca-certificates'
   action :nothing

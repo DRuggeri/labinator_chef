@@ -1,0 +1,2 @@
+xinput map-to-output 10 HDMI-1
+xinput map-to-output 11 eDP-1

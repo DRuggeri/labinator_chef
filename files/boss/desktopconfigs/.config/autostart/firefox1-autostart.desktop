@@ -1,0 +1,5 @@
+[Desktop Entry]
+Type=Application
+Name=Top Firefox
+Exec=sh -c '/usr/local/bin/launchWindow.sh top firefox --new-window https://boss.local:3000/'
+OnlyShowIn=LXDE

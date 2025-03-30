@@ -1,0 +1,5 @@
+[Desktop Entry]
+Type=Application
+Name=Bottom Firefox
+Exec=sh -c 'sleep 5;/usr/local/bin/launchWindow.sh bottom firefox --new-window https://boss.local:3000/bottom'
+OnlyShowIn=LXDE

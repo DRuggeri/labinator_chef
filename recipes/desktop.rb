@@ -11,32 +11,18 @@ file '/etc/apt/preferences' do
   EOF
 end
 
-# Set up dual-monitor
-directory '/home/boss/.config/autostart' do
-  recursive true
+remote_directory '/home/boss' do
+  source 'boss/desktopconfigs'
   owner 'boss'
   group 'boss'
+  files_owner 'boss'
+  files_group 'boss'
+  purge false
+  notifies :run, "execute[reset-home-perms]", :immediately
 end
 
-file '/home/boss/.config/autostart/lxrandr-autostart.desktop' do
-  content <<-EOF.gsub(/^    /, '')
-    [Desktop Entry]
-    Type=Application
-    Name=LXRandR autostart
-    Comment=Start xrandr with settings done in LXRandR
-    Exec=sh -c 'xrandr --output HDMI-1 --mode 1024x600 --rate 60.04 --output eDP-1 --mode 1024x768 --rate 60.00 --below HDMI-1'
-    OnlyShowIn=LXDE
-  EOF
-end
-
-# Fix touchscreen input maps
-file '/home/boss/.xsessionrc' do
-  content <<-EOF.gsub(/^    /, '')
-    xinput map-to-output 10 HDMI-1
-    xinput map-to-output 11 eDP-1
-  EOF
-  owner 'boss'
-  group 'boss'
+execute 'reset-home-perms' do
+  command 'chown -R boss:boss /home/boss/.config /home/boss/.xsessionrc'
 end
 
 # Set up autologin and start VNC
@@ -63,10 +49,74 @@ file '/etc/lightdm/lightdm.conf' do
   notifies :restart, "service[lightdm]", :delayed
 end
 
+# Prepare Firefox to trust the local CA and set some basic prefs
+directory '/etc/firefox/policies'
+file '/etc/firefox/policies/policies.json' do
+  content <<-EOF.gsub(/^    /, '')
+    {
+      "policies": {
+        "Bookmarks": [],
+        "ManagedBookmarks": [],
+        "Certificates": {
+          "Install": ["/etc/ssl/certs/root_ca.crt"]
+        },
+        "DisplayBookmarksToolbar": "newtab",
+        "DisplayMenuBar": "default-off",
+        "Homepage": {
+          "URL": "https://boss.local:3000/",
+          "Locked": true,
+          "StartPage": "homepage"
+        },
+        "NoDefaultBookmarks": true
+      }
+    }
+  EOF
+end
+
 # Use apt_package to avoid installing all the recommends (including connman)
 apt_package 'lxde' do
   options [ '--no-install-recommends' ]
   action :install
+end
+
+file '/usr/local/bin/launchWindow.sh' do
+  content <<-EOF.gsub(/^    /, '')
+    #!/bin/bash
+    set -e
+    
+    export XAUTHORITY=/home/boss/.Xauthority DISPLAY=:0
+
+    POSITION="0,0,800,50,50"
+
+    if [ "$1" = "top" -o "$1" = "bottom" ];then
+      if [ "$1" = "top" ];then
+        POSITION="0,0,0,50,50"
+      fi
+      shift
+    fi
+
+    CURID=`wmctrl -l | tail -1 | awk '{print $1}'`
+    ID=$CURID
+
+    #Launch the program
+    "$@" &
+
+    while [ "$ID" == "$CURID" ];do
+      #Get its window ID
+      ID=`wmctrl -l | tail -1 | awk '{print $1}'`
+      sleep 1
+    done
+
+    #Disable fullscreen
+    wmctrl -i -r $ID -b remove,fullscreen
+
+    #Move to where it should be
+    wmctrl -i -r $ID -e $POSITION
+
+    #Set back to full screen
+    wmctrl -i -r $ID -b add,fullscreen
+  EOF
+  mode '0755'
 end
 
 [
@@ -74,6 +124,7 @@ end
   'xinput',
   'x11vnc',
   'lightdm',
+  'wmctrl',
   'firefox-esr',
 ].each do |name|
   package name do

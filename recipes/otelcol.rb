@@ -61,7 +61,7 @@ file '/etc/monitors/otelcol.yml' do
           fields:
           - body.PRIORITY
           - body.SYSLOG_IDENTIFIER
-          - body.MESSAGE            
+          - body.MESSAGE
 
       # Remote log messages
       tcplog:
@@ -120,7 +120,7 @@ file '/etc/monitors/otelcol.yml' do
           field: body
         - id: setresourcehost
           type: add
-          field: resource.host.name
+          field: 'resource["host.name"]'
           value: EXPR(trimSuffix(attributes.hostname, ".local"))
         - id: setresourceservicename
           type: copy
@@ -175,6 +175,12 @@ file '/etc/monitors/otelcol.yml' do
           - IsMatch(body["MESSAGE"], "^\\\\[")
 
     exporters:
+      file/tempfile:
+        path: /tmp/collector.out
+        rotation:
+          max_megabytes: 5
+          max_days: 14
+          max_backups: 50
       prometheus:
         endpoint: ':9124'
         tls:

@@ -2,14 +2,22 @@ directory '/root/go/src/github.com/DRuggeri' do
   recursive true
 end
 
-git '/root/go/src/github.com/DRuggeri/labwatch' do
-  repository 'https://github.com/DRuggeri/labwatch.git'
+file '/etc/monitors/labwatch.yaml' do
+  content <<-EOU.gsub(/^    /, '')
+    loki-address: boss.local:3100
+    talos-config: /home/boss/talos/talosconfig
+    talos-cluster: koobs
+  EOU
+end
+
+git '/root/go/src/github.com/DRuggeri/labinator_labwatch' do
+  repository 'https://github.com/DRuggeri/labinator_labwatch.git'
   notifies :run, 'execute[build labwatch]', :immediately
 end
 
 execute 'build labwatch' do
   command 'go build -o /usr/local/bin/labwatch'
-  cwd '/root/go/src/github.com/DRuggeri/labwatch'
+  cwd '/root/go/src/github.com/DRuggeri/labinator_labwatch'
   notifies :restart, 'service[labwatch]', :delayed
 end
 
@@ -25,7 +33,7 @@ systemd_unit 'labwatch.service' do
     Group=boss
     Environment=XAUTHORITY=/home/boss/.Xauthority
     Environment=DISPLAY=:0
-    ExecStart=/usr/local/bin/labwatch
+    ExecStart=/usr/local/bin/labwatch -c /etc/monitors/labwatch.yaml
     Restart=always
 
     [Install]

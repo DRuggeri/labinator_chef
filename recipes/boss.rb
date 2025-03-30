@@ -232,3 +232,6 @@ include_recipe 'labinator::liveimage'
 
 ##### Set up our desktop
 include_recipe 'labinator::desktop'
+
+##### Finally - load up labwatch
+include_recipe 'labinator::labwatch'

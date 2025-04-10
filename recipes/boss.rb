@@ -6,6 +6,12 @@ user 'boss' do
   home '/home/boss'
 end
 
+# So boss can read/write to serial devices (relayinator, router console, and router status screen)
+group 'dialout' do
+  members 'boss'
+  append true
+end
+
 directory '/home/boss' do
   owner 'boss'
   group 'boss'

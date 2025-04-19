@@ -7,6 +7,9 @@ file '/etc/monitors/labwatch.yaml' do
     loki-address: boss.local:3100
     talos-config: /home/boss/talos/talosconfig
     talos-cluster: physical
+    powermanager-port: /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_A50285BI-if00-port0
+    netboot-folder: /var/www/html/nodes-ipxe/
+    netboot-link: lab
   EOU
 end
 

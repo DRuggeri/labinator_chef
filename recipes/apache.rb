@@ -21,6 +21,8 @@ end
 
 file '/etc/apache2/sites-available/000-default.conf' do
   content '
+ServerName boss.local
+
 CustomLog "|/usr/bin/logger -t access_log -p user.info" combined
 ErrorLog "|/usr/bin/logger -t error_log -p user.warn"
 

@@ -11,46 +11,53 @@ node.default['labinator']['network']['dns_domain'] = 'local'
 node.default['labinator']['network']['dhcp_start'] = '192.168.122.200'
 node.default['labinator']['network']['dhcp_end'] = '192.168.122.254'
 
-node.default['labinator']['network']['ipxe_endpoint'] = 'http://boss.local/talos-boot.ipxe'
+node.default['labinator']['network']['ipxe_endpoint'] = 'http://boss.local/chain-boot.ipxe'
 node.default['labinator']['network']['log_endpoint'] = 'boss.local'
 node.default['labinator']['network']['mirror_endpoint'] = 'boss.local:5000'
 
-# See dnsmasq.rb recipe - will create name.domain records (example: boss.local)
-node.default['labinator']['network']['dns_records'] = {
-  # Physical nodes - supporting systems
-  'firewall' => '192.168.122.1',
-  'switch' => '192.168.122.2',
-  'boss' => '192.168.122.3',
-
-  # Physical nodes - lab victims
-  'node1' => '192.168.122.10',
-  'node2' => '192.168.122.11',
-  'node3' => '192.168.122.12',
-  'node4' => '192.168.122.13',
-  'node5' => '192.168.122.14',
-  'node6' => '192.168.122.15',
-
-  # Kubernetes nodes - control plane
-  'c1' => '192.168.122.20',
-  'c2' => '192.168.122.21',
-  'c3' => '192.168.122.22',
-  'koobs' => [ '192.168.122.20', '192.168.122.21', '192.168.122.22' ],
+node.default['labinator']['network']['nodes'] = {
+  'firewall' => {
+    'ip' => '192.168.122.1',
+    'mac' => 'b2:28:26:90:65:df',
+  },
+  'switch' => {
+    'ip' => '192.168.122.2',
+    'mac' => '00:28:72:00:07:02',
+  },
+  #'zeropi' => {
+  #  'ip' => '192.168.122.5',
+  #  'mac' => '02:00:5a:7c:69:d',
+  #},
+  'boss' => {
+    'ip' => '192.168.122.3',
+    'mac' => '16:09:01:1a:f1:a1',
+    'vnc' => 5900,
+  },
+  'node1' => {
+    'ip' => '192.168.122.11',
+    'mac' => '16:09:01:1a:f4:30',
+  },
+  'node2' => {
+    'ip' => '192.168.122.12',
+    'mac' => '16:09:01:1a:f1:a3',
+  },
+  'node3' => {
+    'ip' => '192.168.122.13',
+    'mac' => '16:09:01:1a:f3:55',
+  },
+  'node4' => {
+    'ip' => '192.168.122.14',
+    'mac' => '16:09:01:1a:f1:d8',
+  },
+  'node5' => {
+    'ip' => '192.168.122.15',
+    'mac' => '16:09:01:1a:f1:92',
+  },
+  'node6' => {
+    'ip' => '192.168.122.16',
+    'mac' => '16:09:01:1a:f4:d7',
+  },
 }
 
-# pre-generate DNS records for up to 32 worker nodes from 192.168.122.30 onwarward
-for i in 0..32
-  node.default['labinator']['network']['dns_records'][i+1] = "192.168.122.#{30 + i}"
-end
-
-# manual DHCP reservations for playing around
-node.default['labinator']['network']['dhcp_reservations'] = {
-  '02:00:5a:7c:69:dc' => '192.168.122.5', # Zeropi 3
-  'b2:28:26:90:65:df' => '192.168.122.199', # Nanopi R3s
-  '16:09:01:1a:f1:a1' => '192.168.1252.3', # Boss
-  '16:09:01:1a:f4:30' => '192.168.122.10',
-  '16:09:01:1a:f1:a3' => '192.168.122.11',
-  '16:09:01:1a:f3:55' => '192.168.122.12',
-  '16:09:01:1a:f1:d8' => '192.168.122.13',
-  '16:09:01:1a:f1:92' => '192.168.122.14',
-  '16:09:01:1a:f4:d7' => '192.168.122.15',
-}
+node.default['labinator']['network']['dns_records'] = {}
+node.default['labinator']['network']['dhcp_reservations'] = {}

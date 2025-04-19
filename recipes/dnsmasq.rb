@@ -5,6 +5,15 @@ package 'ipxe'
 # https://openwrt.org/docs/guide-user/base-system/dhcp_configuration#multi-arch_tftp_boot
 
 dns_records = [ '      \\' ]
+dhcp_hosts  = [ '      \\' ]
+
+# Populate all of the nodes in the network with DNS and DHCP
+node['labinator']['network']['nodes'].each do |name, info|
+  dns_records << "      --host-record=#{name}.local,#{info['ip']} \\"
+  dhcp_hosts  << "      --dhcp-host=#{info['mac']},#{info['ip']} \\"
+end
+
+# Add additional DNS and DHCP entries
 node['labinator']['network']['dns_records'].each do |name, val|
   # Always coax to array to support DNS names with round-robin values
   vals = val.is_a?(String) ? [ val ] : val
@@ -13,7 +22,6 @@ node['labinator']['network']['dns_records'].each do |name, val|
   end
 end
 
-dhcp_hosts = [ '      \\' ]
 node['labinator']['network']['dhcp_reservations'].each do |mac, ip|
   dhcp_hosts << "      --dhcp-host=#{mac},#{ip} \\"
 end

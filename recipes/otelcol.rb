@@ -156,6 +156,26 @@ file '/etc/monitors/otelcol.yml' do
         #  type: file_output
         #  path: /tmp/collector.out
 
+      # Local files
+      filelog/apacheaccess:
+        include:
+          - /var/log/apache2/other_vhosts_access.log
+        operators:
+          - type: regex_parser
+            # boss.home.bitnebula.com:80 192.168.122.10 - - [19/Apr/2025:08:16:45 -0500] "GET /talos-netboot-ipxe/16-09-01-1a-f4-30.ipxe HTTP/1.1" 404 488 "-" "iPXE/1.0.0+git-20190125.36a4c85-5.1"
+            regex: |-
+              ^(?P<vhost>[^:]+):(?P<port>\\d+) (?P<remote>\\S+) (?P<logname>\\S+) (?P<user>\\S+) \\[(?P<ts>[^\\]]+)\\] "(?P<method>\\S+) +(?P<uri>[^ ]+) (?P<httpver>[^"]+)" (?P<code>\\d+) (?P<bytes>\\d+) "(?P<referrer>[^"]+)" "(?P<useragent>[^"]+)"
+            timestamp:
+              parse_from: attributes.ts
+              layout_type: gotime
+              layout: '02/Jan/2006:15:04:05 -0700'
+          - type: remove
+            field: attributes.ts
+          - id: setservicename
+            type: add
+            field: 'resource["service.name"]'
+            value: 'apache2'
+
     processors:
       batch:
 
@@ -218,6 +238,10 @@ file '/etc/monitors/otelcol.yml' do
         logs/journald:
           receivers: [ journald ]
           processors: [ filter, resourcedetection, batch ]
+          exporters: [ otlphttp ]
+        logs/apacheaccess:
+          receivers: [ filelog/apacheaccess ]
+          processors: [ resourcedetection ]
           exporters: [ otlphttp ]
   EOU
   notifies :restart, "service[otelcol]", :delayed

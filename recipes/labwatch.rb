@@ -6,7 +6,7 @@ file '/etc/monitors/labwatch.yaml' do
   content <<-EOU.gsub(/^    /, '')
     loki-address: boss.local:3100
     talos-config: /home/boss/talos/talosconfig
-    talos-cluster: koobs
+    talos-cluster: physical
   EOU
 end
 

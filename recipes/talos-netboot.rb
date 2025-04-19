@@ -1,10 +1,14 @@
-file '/var/www/html/talos-boot.ipxe' do
+file '/var/www/html/chain-boot.ipxe' do
   content "#!ipxe
-chain talos-netboot-ipxe/${mac:hexhyp}.ipxe
+chain nodes-ipxe/lab/${mac:hexhyp}.ipxe
 "
 end
-directory '/var/www/html/talos-netboot-ipxe'
-directory '/var/www/html/talos-netboot-configs'
+
+directory '/var/www/html/nodes-ipxe' do
+  owner 'boss'
+  group 'boss'
+end
+
 directory '/var/www/html/pxelinux.cfg'
 
 ##### iPXE assets
@@ -25,162 +29,133 @@ directory '/home/boss/talos' do
   group 'boss'
 end
 
-template '/home/boss/talos/patch-all.yaml' do
-  owner 'boss'
-  group 'boss'
-  mode '0755'
-  source 'talos-netboot/patch-all.yaml.erb'
-  variables(
-    network: node['labinator']['network'],
-    nodes: node['labinator']['nodes'],
-  )
-  notifies :run, 'execute[generate talos configs]'
-end
+directory '/home/boss/talos/scenarios'
 
-execute 'create talos secrets' do
-  login true
-  user 'boss'
-  group 'boss'
-  creates '/home/boss/talos/secrets.yaml'
-  command 'talosctl gen secrets -o /home/boss/talos/secrets.yaml'
-  notifies :run, 'execute[generate talos configs]'
-end
+node['labinator']['talos']['scenarios'].each do |scenario, scenario_config|
+  directory "/var/www/html/nodes-ipxe/#{scenario}"
+  directory "/home/boss/talos/scenarios/#{scenario}"
 
-execute 'generate talos configs' do
-  login true
-  user 'boss'
-  group 'boss'
-  creates '/home/boss/talos/controlplane.yaml'
-  command "talosctl gen config koobs https://koobs.local:6443 \
-    --force \
-    --with-secrets /home/boss/talos/secrets.yaml \
-    --config-patch @/home/boss/talos/patch-all.yaml \
-    --output /home/boss/talos \
-  "
-end
-
-execute 'set talos endpoints' do
-  login true
-  user 'boss'
-  group 'boss'
-  #creates '/home/boss/talos/controlplane.yaml'
-  command "talosctl \
-    --talosconfig /home/boss/talos/talosconfig \
-    config endpoint \
-    #{node['labinator']['nodes']['c1']['ip']} \
-    #{node['labinator']['nodes']['c2']['ip']} \
-    #{node['labinator']['nodes']['c3']['ip']} \
-  "
-end
-
-controlplane_ips = []
-all_ips = []
-node['labinator']['nodes'].each do |nodename, n|
-  controlplane_ips << n['ip'] if n['role'] == 'controlplane'
-  all_ips << n['ip']
-  hexhyp=n['mac'].gsub(/:/, "-")
-  template "/home/boss/talos/patch-node-#{nodename}.yaml" do
-    owner 'boss'
-    group 'boss'
-    source 'talos-netboot/patch-node.yaml.erb'
+  template "/home/boss/talos/scenarios/#{scenario}/patch-all.yaml" do
+    source 'talos-netboot/patch-all.yaml.erb'
     variables(
-      nodename: nodename,
-      n: n,
       network: node['labinator']['network'],
+      nodes: scenario_config['nodes'],
     )
+    notifies :run, "execute[generate #{scenario} talos configs]"
+  end
+  
+  execute "create #{scenario} talos secrets" do
+    creates "/home/boss/talos/scenarios/#{scenario}/secrets.yaml"
+    command "talosctl gen secrets -o /home/boss/talos/scenarios/#{scenario}/secrets.yaml"
+    notifies :run, "execute[generate #{scenario} talos configs]"
   end
 
-  execute "create final node config for #{nodename}" do
-    user 'boss'
-    group 'boss'
-    login true
-    command "talosctl \
-      --talosconfig /home/boss/talos/talosconfig \
-      machineconfig patch /home/boss/talos/#{n['role']}.yaml \
-      --patch @/home/boss/talos/patch-node-#{nodename}.yaml \
-      -o /home/boss/talos/node-#{nodename}.yaml \
+  execute "generate #{scenario} talos configs" do
+    creates "/home/boss/talos/scenarios/#{scenario}/controlplane.yaml"
+    command "talosctl gen config #{scenario} https://#{scenario}.local:6443 \
+      --force \
+      --with-secrets /home/boss/talos/scenarios/#{scenario}/secrets.yaml \
+      --config-patch @/home/boss/talos/scenarios/#{scenario}/patch-all.yaml \
+      --output /home/boss/talos/scenarios/#{scenario} \
     "
-    creates "/home/boss/talos/node-#{nodename}.yaml"
-    subscribes :run, 'template[/home/boss/talos/patch-all.yaml]'
-    subscribes :run, 'execute[create talos secrets]'
-    subscribes :run, 'execute[generate talos configs]'
-    subscribes :run, 'template[/home/boss/talos/patch-node-#{nodename}.yaml]'
-    notifies :run, "execute[copy node config for #{nodename}]", :immediately
   end
 
-  execute "copy node config for #{nodename}" do
-    command "cp /home/boss/talos/node-#{nodename}.yaml /var/www/html/talos-netboot-configs/"
+  # Generate per-node configs
+  controlplane_ips = []
+  all_ips = []
+  scenario_config['nodes'].each do |nodename, n|
+    controlplane_ips << n['ip'] if n['role'] == 'controlplane'
+    all_ips << n['ip']
+    hexhyp=n['mac'].gsub(/:/, "-")
+
+    template "/home/boss/talos/scenarios/#{scenario}/patch-node-#{nodename}.yaml" do
+      source 'talos-netboot/patch-node.yaml.erb'
+      variables(
+        nodename: nodename,
+        n: n,
+        network: node['labinator']['network'],
+      )
+    end
+
+    execute "create final #{scenario} node config for #{nodename}" do
+      command "talosctl \
+        --talosconfig /home/boss/talos/scenarios/#{scenario}/talosconfig \
+        machineconfig patch /home/boss/talos/scenarios/#{scenario}/#{n['role']}.yaml \
+        --patch @/home/boss/talos/scenarios/#{scenario}/patch-node-#{nodename}.yaml \
+        -o /home/boss/talos/scenarios/#{scenario}/node-#{nodename}.yaml \
+      "
+      creates "/home/boss/talos/scenarios/#{scenario}/node-#{nodename}.yaml"
+      subscribes :run, "template[/home/boss/talos/scenarios/#{scenario}/patch-all.yaml]"
+      subscribes :run, "execute[create #{scenario} talos secrets]"
+      subscribes :run, "execute[generate #{scenario} talos configs]"
+      subscribes :run, "template[/home/boss/talos/scenarios/#{scenario}/patch-node-#{nodename}.yaml]"
+      notifies :run, "execute[copy #{scenario} node config for #{nodename}]", :immediately
+      notifies :run, "execute[finalize talos config for #{scenario}]", :delayed
+    end
+
+    execute "copy #{scenario} node config for #{nodename}" do
+      command "cp /home/boss/talos/scenarios/#{scenario}/node-#{nodename}.yaml /var/www/html/nodes-ipxe/#{scenario}/"
+      action :nothing
+    end
+
+    kernel_ip_params=[
+      n['ip'],
+      "",
+      node['labinator']['network']['gateway'],
+      node['labinator']['network']['netmask'],
+      nodename,
+      node['labinator']['network']['talos_netdev'],
+      "none",
+      node['labinator']['network']['dns'],
+      "",
+      node['labinator']['network']['ntp'],
+    ]
+
+    file "/var/www/html/nodes-ipxe/#{scenario}/#{hexhyp}.ipxe" do
+      content <<-EOF.gsub(/^\s+/, '').gsub(/ +/, ' ')
+        #!ipxe
+        kernel /assets/talos-vmlinuz-amd64.xz initrd=talos-initramfs-amd64.xz \
+          talos.platform=metal \
+          console=tty0 \
+          init_on_alloc=1 \
+          slab_nomerge \
+          pti=on \
+          consoleblank=0 \
+          nvme_core.io_timeout=4294967295 \
+          printk.devkmsg=on \
+          ima_template=ima-ng ima_appraise=fix ima_hash=sha512 \
+          ip=#{kernel_ip_params.join(":")} \
+          talos.config=http://boss.local/nodes-ipxe/#{scenario}/node-#{nodename}.yaml \
+
+        initrd /assets/talos-initramfs-amd64.xz
+        boot
+      EOF
+    end
+  end #End nodes
+
+  execute "finalize talos config for #{scenario}" do
+    command "\
+      talosctl \
+        --talosconfig /home/boss/talos/talosconfig
+        config remove #{scenario} \
+      ; \
+      talosctl \
+        --talosconfig /home/boss/talos/scenarios/#{scenario}/talosconfig \
+        config endpoint #{controlplane_ips.join(" ")} \
+      && \
+        talosctl \
+        --talosconfig /home/boss/talos/scenarios/#{scenario}/talosconfig \
+        config node #{all_ips.join(" ")} \
+      && \
+        talosctl \
+        --talosconfig /home/boss/talos/talosconfig \
+        config merge /home/boss/talos/scenarios/#{scenario}/talosconfig
+    "
     action :nothing
   end
-
-  kernel_ip_params=[
-    n['ip'],
-    "",
-    node['labinator']['network']['gateway'],
-    node['labinator']['network']['netmask'],
-    nodename,
-    node['labinator']['network']['talos_netdev'],
-    "none",
-    node['labinator']['network']['dns'],
-    "",
-    node['labinator']['network']['ntp'],
-  ]
-  file "/var/www/html/talos-netboot-ipxe/#{hexhyp}.ipxe" do
-  content <<-EOF.gsub(/^\s+/, '').gsub(/ +/, ' ')
-    #!ipxe
-    kernel /assets/talos-vmlinuz-amd64.xz initrd=talos-initramfs-amd64.xz \
-      talos.platform=metal \
-      console=tty0 \
-      init_on_alloc=1 \
-      slab_nomerge \
-      pti=on \
-      consoleblank=0 \
-      nvme_core.io_timeout=4294967295 \
-      printk.devkmsg=on \
-      ima_template=ima-ng ima_appraise=fix ima_hash=sha512 \
-      ip=#{kernel_ip_params.join(":")} \
-      talos.config=http://boss.local/talos-netboot-configs/node-#{nodename}.yaml \
-
-    initrd /assets/talos-initramfs-amd64.xz
-    boot
-  EOF
-  end
-
-  # TODO - needed for x86 boxes, or only ARM?
-  file "/var/www/html/pxelinux.cfg/01-#{hexhyp}" do
-  content <<-EOF.gsub(/^    /, '').gsub(/ +/, ' ')
-    MENU TITLE Setup Menu
- 
-    LABEL linux
-      KERNEL /assets/talos-vmlinuz-arm64.xz
-      APPEND initrd=/assets/talos-initrd \
-        talos.platform=metal \
-        console=tty0 \
-        init_on_alloc=1 \
-        slab_nomerge \
-        pti=on \
-        consoleblank=0 \
-        nvme_core.io_timeout=4294967295 \
-        printk.devkmsg=on \
-        ima_template=ima-ng ima_appraise=fix ima_hash=sha512 \
-        ip=#{kernel_ip_params.join(":")} \
-        talos.config=http://boss.local/talos-netboot-configs/node-#{nodename}.yaml
-  EOF
-  end
 end
 
-execute 'finalize talos config' do
-    user 'boss'
-    group 'boss'
-    login true
-    command "talosctl --talosconfig /home/boss/talos/talosconfig \
-      config endpoint #{controlplane_ips.join(" ")} \
-      && \
-      talosctl --talosconfig /home/boss/talos/talosconfig \
-      config node #{all_ips.join(" ")} \
-    "
-end
-
+=begin
 template '/usr/local/bin/mkvmlab.sh' do
   source 'talos-netboot/mkvmlab.sh.erb'
   mode '0755'
@@ -189,3 +164,4 @@ template '/usr/local/bin/mkvmlab.sh' do
     nodes: node['labinator']['nodes'],
   )
 end
+=end

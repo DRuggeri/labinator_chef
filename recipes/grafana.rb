@@ -123,7 +123,7 @@ end
 directory '/etc/grafana/provisioning/dashboards/files'
 
 [
-  'dashboard-node-exporter.json',
+  'dashboard-hostmetrics.json',
 ].each do |dashboard_file|
   cookbook_file "/etc/grafana/provisioning/dashboards/files/#{dashboard_file}" do
     source "boss/dashboards/#{dashboard_file}"

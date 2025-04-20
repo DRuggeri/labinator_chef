@@ -11,14 +11,51 @@ end
 file '/etc/monitors/otelcol.yml' do
   content <<-EOU.gsub(/^    /, '')
     receivers:
-      prometheus:
+      prometheus/agent:
         config:
           scrape_configs:
           - job_name: otel-collector
-            scrape_interval: 10s
+            scrape_interval: 5s
             static_configs:
             - targets: [ '127.0.0.1:8889' ]
+            metric_relabel_configs:
+            - action: labeldrop
+              regex: "service_instance_id|service_name"
 
+      hostmetrics/agent:
+        collection_interval: 5s
+        scrapers:
+          cpu:
+            metrics:
+              system.cpu.logical.count:
+                enabled: true
+          memory:
+            metrics:
+              system.memory.utilization:
+                enabled: true
+              system.memory.limit:
+                enabled: true
+          load:
+          disk:
+          filesystem:
+            metrics:
+              system.filesystem.utilization:
+                enabled: true
+          network:
+          paging:
+          processes:
+          process:
+            mute_process_all_errors: true
+            metrics:
+              process.cpu.utilization:
+                enabled: true
+              process.memory.utilization:
+                enabled: true
+              process.threads:
+                enabled: true
+              process.paging.faults:
+                enabled: true
+      
       # local log messages
       journald:
         start_at: end
@@ -178,7 +215,35 @@ file '/etc/monitors/otelcol.yml' do
 
     processors:
       batch:
+      
+      resource/agent:
+        attributes:
+          - action: upsert
+            key: service.namespace
+            value: agent
 
+      attributes/agent:
+        actions:
+          - key: service.namespace
+            action: upsert
+            value: agent
+          - key: service.name
+            action: upsert
+            value: otel-collector
+
+      transform:
+        metric_statements:
+          - context: datapoint
+            statements:
+              - set(attributes["host.name"], resource.attributes["host.name"])
+              - set(attributes["process.command"], resource.attributes["process.command"])
+              - set(attributes["process.command_line"], resource.attributes["process.command_line"])
+              - set(attributes["process.executable.name"], resource.attributes["process.executable.name"])
+              - set(attributes["process.executable.path"], resource.attributes["process.executable.path"])
+              - set(attributes["process.owner"], resource.attributes["process.owner"])
+              - set(attributes["process.parent_pid"], resource.attributes["process.parent_pid"])
+              - set(attributes["process.pid"], resource.attributes["process.pid"])
+            
       resourcedetection:
         detectors: [ system ]
         system:
@@ -214,7 +279,7 @@ file '/etc/monitors/otelcol.yml' do
         logs:
           level: info #debug, info, warn, error
         metrics:
-          level: basic #none, basic, normal, detailed
+          level: detailed #none, basic, normal, detailed
           readers:
             - pull:
                 exporter:
@@ -223,9 +288,9 @@ file '/etc/monitors/otelcol.yml' do
                     port: 8889
 
       pipelines:
-        metrics:
-          receivers: [ prometheus ]
-          processors: []
+        metrics/agent:
+          receivers: [prometheus/agent, hostmetrics/agent]
+          processors: [attributes/agent, resourcedetection, transform]
           exporters: [ prometheus ]
         logs:
           receivers: [ syslog ]

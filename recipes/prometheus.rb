@@ -42,6 +42,7 @@ scrape_configs:
       - targets:
         - boss:9115
   - job_name: otelcol
+    scrape_interval: 5s
     scheme: https
     tls_config: *tls_config
     static_configs:

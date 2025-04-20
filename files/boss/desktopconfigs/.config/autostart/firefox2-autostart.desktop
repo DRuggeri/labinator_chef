@@ -1,5 +1,5 @@
 [Desktop Entry]
 Type=Application
 Name=Bottom Firefox
-Exec=sh -c 'sleep 5;/usr/local/bin/launchWindow.sh bottom firefox --new-window https://boss.local:3000/bottom'
+Exec=sh -c 'test -d /home/boss/.mozilla/firefox/BottomMonitor || mkdir -p /home/boss/.mozilla/firefox/BottomMonitor; firefox --profile /home/boss/.mozilla/firefox/BottomMonitor --marionette -no-remote --kiosk --kiosk-monitor 1'
 OnlyShowIn=LXDE

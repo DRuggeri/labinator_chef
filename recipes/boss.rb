@@ -27,6 +27,14 @@ ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDpOgnZn/MrCAVzxkTGiyq2NXtIKJSbiufS/YKOYxfF
   mode '0700'
 end
 
+directory '/etc/sudoers.d'
+file '/etc/sudoers.d/boss' do
+  content <<-EOF.gsub(/^    /, '')
+    boss ALL=NOPASSWD: /sbin/poweroff
+    boss ALL=NOPASSWD: /sbin/reboot
+  EOF
+end
+
 service 'chef-client' do
   action [:disable, :stop]
 end
@@ -43,6 +51,7 @@ end
 end
 
 [
+  'sudo',
   'wget',              #Web client
   'curl',              #Web client
   'git',               #Duh...

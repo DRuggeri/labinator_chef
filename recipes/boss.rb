@@ -30,8 +30,8 @@ end
 directory '/etc/sudoers.d'
 file '/etc/sudoers.d/boss' do
   content <<-EOF.gsub(/^    /, '')
-    boss ALL=NOPASSWD: /sbin/poweroff
-    boss ALL=NOPASSWD: /sbin/reboot
+    boss ALL=NOPASSWD: /usr/sbin/poweroff
+    boss ALL=NOPASSWD: /usr/sbin/reboot
   EOF
 end
 

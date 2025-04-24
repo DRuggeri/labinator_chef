@@ -1,3 +1,4 @@
 xrandr --output HDMI-1 --mode 1024x600 --rate 60.04 --primary --output eDP-1 --mode 1024x768 --rate 60.00 --below HDMI-1
 xinput map-to-output 10 HDMI-1
 xinput map-to-output 11 eDP-1
+unclutter -display :0 -noevents -grab

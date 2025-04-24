@@ -23,6 +23,7 @@ end
 
 execute 'reset-home-perms' do
   command 'chown -R boss:boss /home/boss/.config /home/boss/.xsessionrc'
+  action :nothing
 end
 
 # Set up autologin and start VNC
@@ -63,7 +64,7 @@ file '/etc/firefox/policies/policies.json' do
         "DisplayBookmarksToolbar": "newtab",
         "DisplayMenuBar": "default-off",
         "Homepage": {
-          "URL": "https://boss.local:3000/",
+          "URL": "https://boss.local:3000/grafana/d/otelcol-contrib-hostmetrics/opentelemetry-collector-hostmetrics-node-exporter?kiosk=true&orgId=1&from=now-15m&to=now&timezone=browser&var-DS_PROMETHEUS=default&var-service_namespace=agent&var-host=boss&var-diskdevices=[a-z]%2B|nvme[0-9]%2Bn[0-9]%2B|mmcblk[0-9]%2B&refresh=5s",
           "Locked": true,
           "StartPage": "homepage"
         },
@@ -122,6 +123,7 @@ end
 [
   'xserver-xorg',
   'xinput',
+  'unclutter',
   'x11vnc',
   'lightdm',
   'wmctrl',

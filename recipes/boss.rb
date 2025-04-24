@@ -17,6 +17,19 @@ directory '/home/boss' do
   group 'boss'
 end
 
+directory '/home/boss/.ssh' do
+  owner 'boss'
+  group 'boss'
+  mode '0700'
+end
+
+execute 'create boss sshkey' do
+  user 'boss'
+  group 'boss'
+  command 'echo "" | ssh-keygen -t rsa -b 4096 -f /home/boss/.ssh/id_rsa'
+  creates '/home/boss/.ssh/id_rsa'
+end
+
 directory '/root/.ssh' do
   mode '0700'
 end

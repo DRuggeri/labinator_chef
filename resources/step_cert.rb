@@ -119,7 +119,7 @@ systemd_unit 'cert-renewer@.service' do
     subscribes :run, "file[#{key_file}]", :immediately
 
     #Always replace if the file is 24 hours old
-    if !::File.exist?(cert_file) || ::File.size(cert_file) == 0 || ::File.mtime(cert_file) < (::Time.now - (60*24))
+    if !::File.exist?(cert_file) || ::File.size(cert_file) == 0 || ::File.mtime(cert_file) < (::Time.now - (60*60*24))
       action :run
     else
       action :nothing

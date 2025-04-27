@@ -1,4 +1,5 @@
 node.default['labinator']['network']['talos_netdev'] = 'enp1s0'
+node.default['labinator']['network']['kvm_netdev'] = 'enp1s0'
 
 node.default['labinator']['versions'] = {
   'prometheus' => '3.0.1',

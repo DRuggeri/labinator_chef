@@ -1,0 +1,14 @@
+[Unit]
+Description=Set up network bridge and KVM disks
+After=network.target
+After=live-config.service
+Before=sshd.service
+Before=libvirtd.service
+
+[Service]
+RemainAfterExit=yes
+Type=oneshot
+ExecStart=/usr/bin/bash /usr/local/bin/setupkvm.sh
+
+[Install]
+WantedBy=multi-user.target

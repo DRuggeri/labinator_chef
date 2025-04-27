@@ -14,6 +14,7 @@ node.default['labinator']['network']['dhcp_end'] = '192.168.122.254'
 node.default['labinator']['network']['ipxe_endpoint'] = 'http://boss.local/chain-boot.ipxe'
 node.default['labinator']['network']['log_endpoint'] = 'boss.local'
 node.default['labinator']['network']['mirror_endpoint'] = 'boss.local:5000'
+node.default['labinator']['network']['http_endpoint'] = 'https://boss.local/'
 
 node.default['labinator']['network']['nodes'] = {
   'firewall' => {

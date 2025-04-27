@@ -24,6 +24,12 @@ checking_remote_file '/var/www/html/assets/talos-vmlinuz-amd64.xz' do
   mode '0755'
 end
 
+checking_remote_file '/var/www/html/assets/metal-amd64.iso' do
+  source "https://github.com/siderolabs/talos/releases/download/v#{node['labinator']['versions']['talos']}/metal-amd64.iso"
+  check_interval 60 * 60 * 24 * 90
+  mode '0755'
+end
+
 directory '/home/boss/talos' do
   owner 'boss'
   group 'boss'
@@ -61,75 +67,96 @@ node['labinator']['talos']['scenarios'].each do |scenario, scenario_config|
   end
 
   # Generate per-node configs
-  controlplane_ips = []
-  all_ips = []
+  talos_controlplane_ips = []
+  all_talos_ips = []
   scenario_config['nodes'].each do |nodename, n|
-    controlplane_ips << n['ip'] if n['role'] == 'controlplane'
-    all_ips << n['ip']
     hexhyp=n['mac'].gsub(/:/, "-")
 
-    template "/home/boss/talos/scenarios/#{scenario}/patch-node-#{nodename}.yaml" do
-      source 'talos-netboot/patch-node.yaml.erb'
-      variables(
-        nodename: nodename,
-        n: n,
-        network: node['labinator']['network'],
-      )
-    end
+    # If these are VM hosts, no need to generate a Talos config and our netboot script is much simpler
+    if n['role'] == 'kvm'
+      file "/var/www/html/nodes-ipxe/#{scenario}/#{hexhyp}.ipxe" do
+        content <<-EOF.gsub(/^\s+/, '').gsub(/ +/, ' ')
+          #!ipxe
+          kernel /assets/kvm-debianlive-vmlinuz-amd64 initrd=kvm-debianlive-initrd-amd64.img \
+            fetch=http://boss.local/assets/kvm-debianlive-filesystem-amd64.squashfs \
+            boot=live components \
+            ip=dhcp \
+            consoleblank=0 \
+            console=tty0 \
+            kvm-amd.nested=1 \
+            kvm-intel.nested=1 \
+  
+          initrd /assets/kvm-debianlive-initrd-amd64.img
+          boot
+        EOF
+      end
+    else
+      talos_controlplane_ips << n['ip'] if n['role'] == 'controlplane'
+      all_talos_ips << n['ip']
 
-    execute "create final #{scenario} node config for #{nodename}" do
-      command "talosctl \
-        --talosconfig /home/boss/talos/scenarios/#{scenario}/talosconfig \
-        machineconfig patch /home/boss/talos/scenarios/#{scenario}/#{n['role']}.yaml \
-        --patch @/home/boss/talos/scenarios/#{scenario}/patch-node-#{nodename}.yaml \
-        -o /home/boss/talos/scenarios/#{scenario}/node-#{nodename}.yaml \
-      "
-      creates "/home/boss/talos/scenarios/#{scenario}/node-#{nodename}.yaml"
-      subscribes :run, "template[/home/boss/talos/scenarios/#{scenario}/patch-all.yaml]"
-      subscribes :run, "execute[create #{scenario} talos secrets]"
-      subscribes :run, "execute[generate #{scenario} talos configs]"
-      subscribes :run, "template[/home/boss/talos/scenarios/#{scenario}/patch-node-#{nodename}.yaml]"
-      notifies :run, "execute[copy #{scenario} node config for #{nodename}]", :immediately
-      notifies :run, "execute[finalize talos config for #{scenario}]", :delayed
-    end
+      template "/home/boss/talos/scenarios/#{scenario}/patch-node-#{nodename}.yaml" do
+        source 'talos-netboot/patch-node.yaml.erb'
+        variables(
+          nodename: nodename,
+          n: n,
+          network: node['labinator']['network'],
+        )
+      end
 
-    execute "copy #{scenario} node config for #{nodename}" do
-      command "cp /home/boss/talos/scenarios/#{scenario}/node-#{nodename}.yaml /var/www/html/nodes-ipxe/#{scenario}/"
-      action :nothing
-    end
+      execute "create final #{scenario} node config for #{nodename}" do
+        command "talosctl \
+          --talosconfig /home/boss/talos/scenarios/#{scenario}/talosconfig \
+          machineconfig patch /home/boss/talos/scenarios/#{scenario}/#{n['role']}.yaml \
+          --patch @/home/boss/talos/scenarios/#{scenario}/patch-node-#{nodename}.yaml \
+          -o /home/boss/talos/scenarios/#{scenario}/node-#{nodename}.yaml \
+        "
+        creates "/home/boss/talos/scenarios/#{scenario}/node-#{nodename}.yaml"
+        subscribes :run, "template[/home/boss/talos/scenarios/#{scenario}/patch-all.yaml]"
+        subscribes :run, "execute[create #{scenario} talos secrets]"
+        subscribes :run, "execute[generate #{scenario} talos configs]"
+        subscribes :run, "template[/home/boss/talos/scenarios/#{scenario}/patch-node-#{nodename}.yaml]"
+        notifies :run, "execute[copy #{scenario} node config for #{nodename}]", :immediately
+        notifies :run, "execute[finalize talos config for #{scenario}]", :delayed
+      end
 
-    kernel_ip_params=[
-      n['ip'],
-      "",
-      node['labinator']['network']['gateway'],
-      node['labinator']['network']['netmask'],
-      nodename,
-      node['labinator']['network']['talos_netdev'],
-      "none",
-      node['labinator']['network']['dns'],
-      "",
-      node['labinator']['network']['ntp'],
-    ]
+      execute "copy #{scenario} node config for #{nodename}" do
+        command "cp /home/boss/talos/scenarios/#{scenario}/node-#{nodename}.yaml /var/www/html/nodes-ipxe/#{scenario}/"
+        action :nothing
+      end
 
-    file "/var/www/html/nodes-ipxe/#{scenario}/#{hexhyp}.ipxe" do
-      content <<-EOF.gsub(/^\s+/, '').gsub(/ +/, ' ')
-        #!ipxe
-        kernel /assets/talos-vmlinuz-amd64.xz initrd=talos-initramfs-amd64.xz \
-          talos.platform=metal \
-          console=tty0 \
-          init_on_alloc=1 \
-          slab_nomerge \
-          pti=on \
-          consoleblank=0 \
-          nvme_core.io_timeout=4294967295 \
-          printk.devkmsg=on \
-          ima_template=ima-ng ima_appraise=fix ima_hash=sha512 \
-          ip=#{kernel_ip_params.join(":")} \
-          talos.config=http://boss.local/nodes-ipxe/#{scenario}/node-#{nodename}.yaml \
-
-        initrd /assets/talos-initramfs-amd64.xz
-        boot
-      EOF
+      kernel_ip_params=[
+        n['ip'],
+        "",
+        node['labinator']['network']['gateway'],
+        node['labinator']['network']['netmask'],
+        nodename,
+        node['labinator']['network']['talos_netdev'],
+        "none",
+        node['labinator']['network']['dns'],
+        "",
+        node['labinator']['network']['ntp'],
+      ]
+  
+      file "/var/www/html/nodes-ipxe/#{scenario}/#{hexhyp}.ipxe" do
+        content <<-EOF.gsub(/^\s+/, '').gsub(/ +/, ' ')
+          #!ipxe
+          kernel /assets/talos-vmlinuz-amd64.xz initrd=talos-initramfs-amd64.xz \
+            talos.platform=metal \
+            console=tty0 \
+            init_on_alloc=1 \
+            slab_nomerge \
+            pti=on \
+            consoleblank=0 \
+            nvme_core.io_timeout=4294967295 \
+            printk.devkmsg=on \
+            ima_template=ima-ng ima_appraise=fix ima_hash=sha512 \
+            ip=#{kernel_ip_params.join(":")} \
+            talos.config=http://boss.local/nodes-ipxe/#{scenario}/node-#{nodename}.yaml \
+  
+          initrd /assets/talos-initramfs-amd64.xz
+          boot
+        EOF
+      end
     end
   end #End nodes
 
@@ -141,11 +168,11 @@ node['labinator']['talos']['scenarios'].each do |scenario, scenario_config|
       ; \
       talosctl \
         --talosconfig /home/boss/talos/scenarios/#{scenario}/talosconfig \
-        config endpoint #{controlplane_ips.join(" ")} \
+        config endpoint #{talos_controlplane_ips.join(" ")} \
       && \
         talosctl \
         --talosconfig /home/boss/talos/scenarios/#{scenario}/talosconfig \
-        config node #{all_ips.join(" ")} \
+        config node #{all_talos_ips.join(" ")} \
       && \
         talosctl \
         --talosconfig /home/boss/talos/talosconfig \

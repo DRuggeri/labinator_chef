@@ -112,6 +112,22 @@ end
   end
 end
 
+file '/etc/default/grub' do
+  content <<-EOF.gsub(/^    /, '')
+    GRUB_DEFAULT=0
+    GRUB_TIMEOUT=1
+    GRUB_TIMEOUT_STYLE=hidden
+    GRUB_DISTRIBUTOR=`lsb_release -i -s 2> /dev/null || echo Debian`
+    GRUB_CMDLINE_LINUX_DEFAULT="quiet"
+    GRUB_CMDLINE_LINUX=""
+    GRUB_DISABLE_OS_PROBER=true
+  EOF
+  notifies :run, 'execute[update-grub]', :immediately
+end
+execute 'update-grub' do
+  action :nothing
+end
+
 [
   'charts',
   'talos',

@@ -1,5 +1,5 @@
 [Desktop Entry]
 Type=Application
 Name=Top Firefox
-Exec=sh -c 'test -d /home/boss/.mozilla/firefox/TopMonitor || mkdir -p /home/boss/.mozilla/firefox/TopMonitor; firefox --profile /home/boss/.mozilla/firefox/TopMonitor -no-remote --kiosk --kiosk-monitor 0 http://boss.local:8080/'
+Exec=sh -c 'firefox --profile /home/boss/.mozilla/firefox/TopMonitor -no-remote --kiosk --kiosk-monitor 0 http://boss.local:8080/'
 OnlyShowIn=LXDE

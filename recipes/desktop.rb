@@ -21,6 +21,13 @@ remote_directory '/home/boss' do
   notifies :run, "execute[reset-home-perms]", :immediately
 end
 
+[ '/home/boss/.mozilla/firefox', '/home/boss/.mozilla/firefox/TopMonitor', '/home/boss/.mozilla/firefox/BottomMonitor' ].each do |dir|
+  directory dir do
+    owner 'boss'
+    group 'boss'
+  end
+end
+
 execute 'reset-home-perms' do
   command 'chown -R boss:boss /home/boss/.config /home/boss/.xsessionrc'
   action :nothing

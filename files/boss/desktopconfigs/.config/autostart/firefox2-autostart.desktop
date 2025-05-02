@@ -1,5 +1,5 @@
 [Desktop Entry]
 Type=Application
 Name=Bottom Firefox
-Exec=sh -c 'test -d /home/boss/.mozilla/firefox/BottomMonitor || mkdir -p /home/boss/.mozilla/firefox/BottomMonitor; firefox --profile /home/boss/.mozilla/firefox/BottomMonitor --marionette -no-remote --kiosk --kiosk-monitor 1'
+Exec=sh -c 'firefox --profile /home/boss/.mozilla/firefox/BottomMonitor --marionette -no-remote --kiosk --kiosk-monitor 1'
 OnlyShowIn=LXDE

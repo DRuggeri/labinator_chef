@@ -10,6 +10,8 @@ file '/etc/monitors/labwatch.yaml' do
     powermanager-port: /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_A50285BI-if00-port0
     netboot-folder: /var/www/html/nodes-ipxe/
     netboot-link: lab
+    TalosScenarioConfig: /home/boss/talos/scenarios/configs.yaml
+    TalosScenarioNodesDir: /home/boss/talos/scenarios
   EOU
 end
 

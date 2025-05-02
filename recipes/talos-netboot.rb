@@ -37,6 +37,10 @@ end
 
 directory '/home/boss/talos/scenarios'
 
+file '/home/boss/talos/scenarios/configs.yaml' do
+  content node['labinator']['talos']['scenario_config']
+end
+
 node['labinator']['talos']['scenarios'].each do |scenario, scenario_config|
   directory "/var/www/html/nodes-ipxe/#{scenario}"
   directory "/home/boss/talos/scenarios/#{scenario}"

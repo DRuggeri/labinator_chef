@@ -271,6 +271,8 @@ end
 
 include_recipe 'labinator::talos-netboot'
 
+include_recipe 'labinator::kubernetes'
+
 ##### Optional - livecd image creation
 include_recipe 'labinator::liveimage'
 

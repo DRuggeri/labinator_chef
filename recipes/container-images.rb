@@ -1,5 +1,6 @@
 # Talos: talosctl image default
 # Kyverno: cat ~/charts/kyverno/values.yaml | yq -r '.. | .image? | select(.repository) | "\(.defaultRegistry)/\(.repository):\(.tag)"' | sort  -u | sed -e 's/^null/docker.io/g' -e "s/:null/:$kyvernoversion/g"
+# kube-state-metrics: grep appVersion kube-state-metrics/Chart.yaml
 #quay.io/poseidon/matchbox:v#{node['labinator']['versions']['matchbox']}
 node.default['labinator']['container_images']['static']=%W{
 docker.io/registry:2
@@ -13,10 +14,12 @@ ghcr.io/kyverno/kyverno-cli:v#{node['labinator']['versions']['kyverno']}
 ghcr.io/kyverno/kyverno:v#{node['labinator']['versions']['kyverno']}
 ghcr.io/kyverno/kyvernopre:v#{node['labinator']['versions']['kyverno']}
 ghcr.io/kyverno/reports-controller:v#{node['labinator']['versions']['kyverno']}
+
 docker.io/bitnami/kubectl:1.30.2
 docker.io/busybox:1.35
 
-docker.io/otel/opentelemetry-collector-contrib:#{node['labinator']['versions']['otelcol']}
+ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:#{node['labinator']['versions']['otelcol']}
+registry.k8s.io/kube-state-metrics/kube-state-metrics:v#{node['labinator']['versions']['kube-state-metrics']}
 }
 
 bash 'helmcharts' do
@@ -29,9 +32,12 @@ bash 'helmcharts' do
 
     helm repo add kyverno https://kyverno.github.io/kyverno/
     helm fetch -d ~/charts kyverno/kyverno --version #{node['labinator']['versions']['kyvernochart']}
+
+    helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+    helm fetch -d ~/charts prometheus-community/kube-state-metrics --version #{node['labinator']['versions']['kube-state-metricschart']}
   EOH
   live_stream true
-  not_if { ::File.directory?('/home/boss/charts') }
+  creates "/home/boss/charts/opentelemetry-collector-#{node['labinator']['versions']['otelcolchart']}.tgz"
 end
 
 ruby_block "get list of talos images" do

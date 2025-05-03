@@ -7,10 +7,12 @@ node.default['labinator']['versions'] = {
   'talos' => '1.9.1',
   'matchbox' => '0.11.0',
   'helm' => '3.16.3',
-  'otelcol' => '0.115.1',
-  'otelcolchart' => '0.115.1',
+  'otelcol' => '0.125.0',
+  'otelcolchart' => '0.122.5',
   'kyverno' => '1.13.2',
   'kyvernochart' => '3.3.4',
+  'kube-state-metrics' => '2.15.0',
+  'kube-state-metricschart' => '5.33.0',
 
   # Site tools
   'protoc' => '29.3',

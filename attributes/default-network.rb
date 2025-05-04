@@ -15,6 +15,7 @@ node.default['labinator']['network']['ipxe_endpoint'] = 'http://boss.local/chain
 node.default['labinator']['network']['log_endpoint'] = 'boss.local'
 node.default['labinator']['network']['mirror_endpoint'] = 'boss.local:5000'
 node.default['labinator']['network']['http_endpoint'] = 'https://boss.local/'
+node.default['labinator']['network']['labwatch_endpoint'] = 'http://boss.local:8080'
 
 node.default['labinator']['network']['nodes'] = {
   'firewall' => {

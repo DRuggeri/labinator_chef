@@ -148,10 +148,15 @@ node['labinator']['talos']['scenarios'].each do |type, cfg|
     node.default['labinator']['network']['dns_records'][name] = n['ip']
   end
 
-  # Also add each control plane node to a DNS name for the cluster
+  # Also add each control plane node and worker node to DNS names for the cluster
   node.default['labinator']['network']['dns_records'][type] = []
+  node.default['labinator']['network']['dns_records']["#{type}-workers"] = []
+
   cfg['control-plane'].each do |name, n|
     node.default['labinator']['network']['dns_records'][type] << n['ip']
+  end
+  cfg['workers'].each do |name, n|
+    node.default['labinator']['network']['dns_records']["#{type}-workers"] << n['ip']
   end
 end
 

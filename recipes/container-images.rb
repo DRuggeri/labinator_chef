@@ -2,6 +2,7 @@
 # Kyverno: cat ~/charts/kyverno/values.yaml | yq -r '.. | .image? | select(.repository) | "\(.defaultRegistry)/\(.repository):\(.tag)"' | sort  -u | sed -e 's/^null/docker.io/g' -e "s/:null/:$kyvernoversion/g"
 # kube-state-metrics: grep appVersion kube-state-metrics/Chart.yaml
 #quay.io/poseidon/matchbox:v#{node['labinator']['versions']['matchbox']}
+# helm template kube-prometheus-stack | yq -r '..|.image? | select(.)'     | sort -u
 node.default['labinator']['container_images']['static']=%W{
 docker.io/registry:2
 
@@ -19,7 +20,13 @@ docker.io/bitnami/kubectl:1.30.2
 docker.io/busybox:1.35
 
 ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:#{node['labinator']['versions']['otelcol']}
-registry.k8s.io/kube-state-metrics/kube-state-metrics:v#{node['labinator']['versions']['kube-state-metrics']}
+
+quay.io/prometheus/node-exporter:v#{node['labinator']['versions']['node-exporterimage']}
+quay.io/prometheus-operator/prometheus-operator:v#{node['labinator']['versions']['prometheus-operatorimage']}
+quay.io/prometheus/prometheus:v#{node['labinator']['versions']['prometheusimage']}
+registry.k8s.io/kube-state-metrics/kube-state-metrics:v#{node['labinator']['versions']['kube-state-metricsimage']}
+registry.k8s.io/ingress-nginx/kube-webhook-certgen:v#{node['labinator']['versions']['kube-webhook-certgenimage']}
+quay.io/prometheus-operator/prometheus-config-reloader:v#{node['labinator']['versions']['prometheus-config-reloaderimage']}
 }
 
 bash 'helmcharts' do
@@ -34,7 +41,7 @@ bash 'helmcharts' do
     helm fetch -d ~/charts kyverno/kyverno --version #{node['labinator']['versions']['kyvernochart']}
 
     helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-    helm fetch -d ~/charts prometheus-community/kube-state-metrics --version #{node['labinator']['versions']['kube-state-metricschart']}
+    helm fetch -d ~/charts prometheus-community/kube-prometheus-stack --version #{node['labinator']['versions']['kube-prometheus-stackchart']}
   EOH
   live_stream true
   creates "/home/boss/charts/opentelemetry-collector-#{node['labinator']['versions']['otelcolchart']}.tgz"

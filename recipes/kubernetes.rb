@@ -47,16 +47,32 @@ file '/home/boss/kube/otelcol-values.yaml' do
   }
 end
 
-file '/home/boss/kube/kube-state-metrics-values.yaml' do
+file '/home/boss/kube/kube-prometheus-stack-values.yaml' do
   content lazy { <<-EOF.gsub(/^    /, '')
-    image:
-      registry: #{node['labinator']['network']['mirror_endpoint']}
-      tag: v#{node['labinator']['versions']['kube-state-metrics']}
-    service:
-      type: NodePort
-      nodePort: 30000
+    defaultRules:
+      create: false
+    
+    global:
+      imageRegistry: #{node['labinator']['network']['mirror_endpoint']}
+
+    alertmanager:
+      enabled: false
+    
+    grafana:
+      enabled: false
+    
+    prometheus:
+      service:
+        type: NodePort
+        nodePort: 30090
   EOF
   }
+end
+
+file '/etc/monitors/promsd/kube-prometheus-stack.yaml' do
+  owner 'boss'
+  group 'boss'
+  mode '0644'
 end
 
 file '/home/boss/kube/post-install.sh' do
@@ -67,6 +83,13 @@ file '/home/boss/kube/post-install.sh' do
     #!/bin/bash
     
     helm upgrade --install otelcol-contrib /home/boss/charts/opentelemetry-collector-#{node['labinator']['versions']['otelcolchart']}.tgz --timeout 5m --namespace kube-system -f /home/boss/kube/otelcol-values.yaml
-    helm upgrade --install kube-state-metrics /home/boss/charts/kube-state-metrics-#{node['labinator']['versions']['kube-state-metricschart']}.tgz --timeout 5m --create-namespace --namespace monitoring -f /home/boss/kube/kube-state-metrics-values.yaml
+    helm upgrade --install kube-prometheus-stack /home/boss/charts/kube-prometheus-stack-#{node['labinator']['versions']['kube-prometheus-stackchart']}.tgz --timeout 5m --namespace kube-prometheus-stack --create-namespace -f /home/boss/kube/kube-prometheus-stack-values.yaml
+
+    LAB=`curl -sk #{node['labinator']['network']['labwatch_endpoint']}/getlab`
+    echo "
+    - targets:
+      - ${LAB}-workers:30090
+    " > /etc/monitors/promsd/kube-prometheus-stack.yaml
+
   EOF
 end

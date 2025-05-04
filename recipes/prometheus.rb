@@ -14,47 +14,58 @@ directory '/etc/monitors' do
   group 'monitors'
 end
 
+directory '/etc/monitors/promsd'
+
 file '/etc/monitors/prometheus.yml' do
-  content "
-global:
-  scrape_interval: 10s
-  evaluation_interval: 10s
-scrape_configs:
-  - job_name: prometheus
-    scheme: https
-    metrics_path: /prometheus/metrics
-    tls_config: &tls_config
-      ca_file: /etc/ssl/certs/ca-certificates.crt
-      insecure_skip_verify: true
-    static_configs:
-      - targets:
-        - boss:9090
-  - job_name: loki
-    scheme: https
-    tls_config: *tls_config
-    static_configs:
-      - targets:
-        - boss:3100
-  - job_name: blackbox
-    scheme: https
-    tls_config: *tls_config
-    static_configs:
-      - targets:
-        - boss:9115
-  - job_name: otelcol
-    scrape_interval: 5s
-    scheme: https
-    tls_config: *tls_config
-    static_configs:
-      - targets:
-        - boss:9124
-  - job_name: grafana
-    scheme: https
-    tls_config: *tls_config
-    static_configs:
-      - targets:
-        - boss:3000
-"
+  content <<-EOF.gsub(/^    /, '')
+    global:
+      scrape_interval: 10s
+      evaluation_interval: 10s
+    scrape_configs:
+      - job_name: prometheus
+        scheme: https
+        metrics_path: /prometheus/metrics
+        tls_config: &tls_config
+          ca_file: /etc/ssl/certs/ca-certificates.crt
+          insecure_skip_verify: true
+        static_configs:
+          - targets:
+            - boss:9090
+      - job_name: loki
+        scheme: https
+        tls_config: *tls_config
+        static_configs:
+          - targets:
+            - boss:3100
+      - job_name: blackbox
+        scheme: https
+        tls_config: *tls_config
+        static_configs:
+          - targets:
+            - boss:9115
+      - job_name: otelcol
+        scrape_interval: 5s
+        scheme: https
+        tls_config: *tls_config
+        static_configs:
+          - targets:
+            - boss:9124
+      - job_name: grafana
+        scheme: https
+        tls_config: *tls_config
+        static_configs:
+          - targets:
+            - boss:3000
+      - job_name: kubernetes
+        honor_labels: true
+        metrics_path: /federate
+        params:
+          'match[]':
+            - '{__name__=~".+"}'
+        file_sd_configs:
+          - files:
+            - '/etc/promsd/kube-prometheus-stack*.yaml'
+  EOF
   notifies :restart, 'service[prometheus]', :delayed
 end
 
@@ -89,6 +100,7 @@ systemd_unit 'prometheus.service' do
                 -v /etc/ssl/private/prometheus.key:/etc/prometheus.key:ro \\
                 -v /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro \\
                 -v /etc/resolv.conf:/etc/resolv.conf:ro \\
+                -v /etc/monitors/promsd:/etc/promsd:ro \\
                 -v /var/lib/prometheus:/prometheus \\
                 docker.io/prom/prometheus:v#{node['labinator']['versions']['prometheus']} \\
                 --log.level=debug \\

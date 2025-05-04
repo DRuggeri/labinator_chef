@@ -11,8 +11,14 @@ node.default['labinator']['versions'] = {
   'otelcolchart' => '0.122.5',
   'kyverno' => '1.13.2',
   'kyvernochart' => '3.3.4',
-  'kube-state-metrics' => '2.15.0',
-  'kube-state-metricschart' => '5.33.0',
+
+  #kube-prometheus-stack
+  'kube-prometheus-stackchart' => '71.2.0',
+  'kube-state-metricsimage' => '2.15.0',
+  'prometheus-operatorimage' => '0.82.0',
+  'prometheusimage' => '3.3.1',
+  'kube-webhook-certgenimage' => '1.5.3',
+  'prometheus-config-reloaderimage' => '0.82.0',
 
   # Site tools
   'protoc' => '29.3',

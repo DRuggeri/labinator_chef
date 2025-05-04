@@ -32,13 +32,15 @@ remote_directory '/var/tmp/kvmchroot' do
   files_mode '0755'
   purge false
   action :create
+  notifies :run, 'execute[build KVM live ISO]', :immediately
 end
 
 #rm -rf /var/www/html/assets/kvm-* /var/www/html/assets/kvm-live-image-amd64.iso /var/tmp/live/kvm-live-image-amd64.iso
 execute 'build KVM live ISO' do
   command '/usr/local/bin/mkliveiso.sh -f /var/tmp/live/kvm-live-image-amd64.iso -a -p "openssh-server curl wget bridge-utils ethtool libvirt-daemon-system libvirt-clients virt-viewer virtinst qemu-utils qemu-system-x86 dnsmasq tcpdump htop screen" -s /var/tmp/setupkvm.sh -c /var/tmp/kvmchroot'
-  creates '/var/tmp/live/kvm-live-image-amd64.iso'
   live_stream true
+
+  action ::File.exist?('/var/tmp/live/kvm-live-image-amd64.iso') ? :nothing : :run
   notifies :run, 'bash[place live kvm assets]', :immediately
 end
   
@@ -52,13 +54,14 @@ bash 'place live kvm assets' do
     rm -rf /var/tmp/livetmp
     cp /var/tmp/live/kvm-live-image-amd64.iso /var/www/html/assets/kvm-live-image-amd64.iso
   EOF
-  creates '/var/www/html/assets/kvm-live-image-amd64.iso'
+  action ::File.exist?('/var/www/html/assets/kvm-live-image-amd64.iso') ? :nothing : :run
 end
 
 execute 'build general purpose live ISO' do
   command '/usr/local/bin/mkliveiso.sh -f /var/tmp/live/general-live-image-amd64.iso -a -p "bash bzip2 wget grep coreutils udev gnupg2 btrfs-progs gawk squashfs-tools vim curl openssl dnsutils unzip gzip rsync psmisc net-tools inetutils-telnet strace tcpdump lsof sysstat memstat file iperf iperf3 iftop ncdu socat jq yq" -c /var/tmp/generalchroot'
-  creates '/var/tmp/live/general-live-image-amd64.iso'
   live_stream true
+
+  action ::File.exist?('/var/tmp/live/general-live-image-amd64.iso') ? :nothing : :run
   notifies :run, 'bash[place live general purpose assets]', :immediately
 end
 
@@ -72,7 +75,7 @@ bash 'place live general purpose assets' do
     rm -rf /var/tmp/livetmp
     cp /var/tmp/live/general-live-image-amd64.iso /var/www/html/assets/general-live-image-amd64.iso
   EOF
-  creates '/var/www/html/assets/general-live-image-amd64.iso'
+  action ::File.exist?('/var/www/html/assets/general-live-image-amd64.iso') ? :nothing : :run
 end
 
 =begin

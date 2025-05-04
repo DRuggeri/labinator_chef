@@ -2,8 +2,9 @@
 
 set -e
 
-test -f /etc/systemd/system/multi-user.target.wants/libvirtd.service || ln -s /lib/systemd/system/libvirtd.service /etc/systemd/system/multi-user.target.wants/libvirtd.service
-test -f /etc/systemd/system/multi-user.target.wants/setupkvm.service || ln -s /lib/systemd/system/setupkvm.service /etc/systemd/system/multi-user.target.wants/setupkvm.service
+for svc in libvirtd setupkvm;do
+  test -f /etc/systemd/system/multi-user.target.wants/${svc}.service || ln -s /lib/systemd/system/${svc}.service /etc/systemd/system/multi-user.target.wants/${svc}.service
+done
 
 test -f /etc/libvirt/qemu/networks/default.xml && cat /etc/libvirt/qemu/networks/default.xml
 echo '

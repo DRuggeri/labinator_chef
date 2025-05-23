@@ -17,6 +17,7 @@ node.default['labinator']['versions'] = {
   'kube-state-metricsimage' => '2.15.0',
   'prometheus-operatorimage' => '0.82.0',
   'prometheusimage' => '3.3.1',
+  'node-exporterimage' => '1.9.1',
   'kube-webhook-certgenimage' => '1.5.3',
   'prometheus-config-reloaderimage' => '0.82.0',
 

@@ -56,6 +56,11 @@ file '/etc/monitors/prometheus.yml' do
         static_configs:
           - targets:
             - boss:3000
+      - job_name: openwrt
+        scheme: http
+        static_configs:
+          - targets:
+            - firewall:9100
       - job_name: kubernetes
         honor_labels: true
         metrics_path: /federate

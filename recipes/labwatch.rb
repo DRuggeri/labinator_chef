@@ -7,10 +7,10 @@ file '/etc/monitors/labwatch.yaml' do
     loki-address: boss.local:3100
     loki-query: '{ host_name =~ ".+" } | json'
     loki-trace: false
-    talos-config: /home/boss/talos/talosconfig
+    talos-config: /home/boss/.talos/config
     talos-cluster: physical
     talos-scenario-config: /home/boss/talos/scenarios/configs.yaml
-    talos-scenario-nodes-directory: /home/boss/talos/scenarios
+    talos-scenarios-directory: /home/boss/talos/scenarios
     powermanager-port: /dev/serial/by-id/usb-FTDI_FT232R_USB_UART_A50285BI-if00-port0
     statusinator-port: '/dev/serial/by-id/usb-Espressif_USB_JTAG_serial_debug_unit_98:3D:AE:E9:29:08-if00'
     netboot-folder: /var/www/html/nodes-ipxe/

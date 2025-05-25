@@ -42,8 +42,16 @@ file '/home/boss/talos/scenarios/configs.yaml' do
 end
 
 node['labinator']['talos']['scenarios'].each do |scenario, scenario_config|
-  directory "/var/www/html/nodes-ipxe/#{scenario}"
-  directory "/home/boss/talos/scenarios/#{scenario}"
+  [
+    "/var/www/html/nodes-ipxe/#{scenario}",
+    "/home/boss/talos/scenarios/#{scenario}",
+  ].each do |dir|
+    directory dir do
+      #Set ownership to boss so labwatch can gegnerate configs
+      owner 'boss'
+      group 'boss'
+    end
+  end
 
   template "/home/boss/talos/scenarios/#{scenario}/patch-all.yaml" do
     source 'talos-netboot/patch-all.yaml.erb'
@@ -51,23 +59,15 @@ node['labinator']['talos']['scenarios'].each do |scenario, scenario_config|
       network: node['labinator']['network'],
       nodes: scenario_config['nodes'],
     )
-    notifies :run, "execute[generate #{scenario} talos configs]"
   end
   
-  execute "create #{scenario} talos secrets" do
-    creates "/home/boss/talos/scenarios/#{scenario}/secrets.yaml"
-    command "talosctl gen secrets -o /home/boss/talos/scenarios/#{scenario}/secrets.yaml"
-    notifies :run, "execute[generate #{scenario} talos configs]"
-  end
-
-  execute "generate #{scenario} talos configs" do
-    creates "/home/boss/talos/scenarios/#{scenario}/controlplane.yaml"
-    command "talosctl gen config #{scenario} https://#{scenario}.local:6443 \
-      --force \
-      --with-secrets /home/boss/talos/scenarios/#{scenario}/secrets.yaml \
-      --config-patch @/home/boss/talos/scenarios/#{scenario}/patch-all.yaml \
-      --output /home/boss/talos/scenarios/#{scenario} \
-    "
+  template "/home/boss/talos/scenarios/#{scenario}/generate.sh" do
+    source 'talos-netboot/generateTalosConfigs.sh.erb'
+    mode '0755'
+    variables(
+      scenario: scenario,
+      nodes: scenario_config['nodes'],
+    )
   end
 
   # Generate per-node configs
@@ -107,27 +107,6 @@ node['labinator']['talos']['scenarios'].each do |scenario, scenario_config|
         )
       end
 
-      execute "create final #{scenario} node config for #{nodename}" do
-        command "talosctl \
-          --talosconfig /home/boss/talos/scenarios/#{scenario}/talosconfig \
-          machineconfig patch /home/boss/talos/scenarios/#{scenario}/#{n['role']}.yaml \
-          --patch @/home/boss/talos/scenarios/#{scenario}/patch-node-#{nodename}.yaml \
-          -o /home/boss/talos/scenarios/#{scenario}/node-#{nodename}.yaml \
-        "
-        creates "/home/boss/talos/scenarios/#{scenario}/node-#{nodename}.yaml"
-        subscribes :run, "template[/home/boss/talos/scenarios/#{scenario}/patch-all.yaml]"
-        subscribes :run, "execute[create #{scenario} talos secrets]"
-        subscribes :run, "execute[generate #{scenario} talos configs]"
-        subscribes :run, "template[/home/boss/talos/scenarios/#{scenario}/patch-node-#{nodename}.yaml]"
-        notifies :run, "execute[copy #{scenario} node config for #{nodename}]", :immediately
-        notifies :run, "execute[finalize talos config for #{scenario}]", :delayed
-      end
-
-      execute "copy #{scenario} node config for #{nodename}" do
-        command "cp /home/boss/talos/scenarios/#{scenario}/node-#{nodename}.yaml /var/www/html/nodes-ipxe/#{scenario}/"
-        action :nothing
-      end
-
       kernel_ip_params=[
         n['ip'],
         "",
@@ -163,36 +142,4 @@ node['labinator']['talos']['scenarios'].each do |scenario, scenario_config|
       end
     end
   end #End nodes
-
-  execute "finalize talos config for #{scenario}" do
-    command "\
-      talosctl \
-        --talosconfig /home/boss/talos/talosconfig
-        config remove #{scenario} \
-      ; \
-      talosctl \
-        --talosconfig /home/boss/talos/scenarios/#{scenario}/talosconfig \
-        config endpoint #{talos_controlplane_ips.join(" ")} \
-      && \
-        talosctl \
-        --talosconfig /home/boss/talos/scenarios/#{scenario}/talosconfig \
-        config node #{all_talos_ips.join(" ")} \
-      && \
-        talosctl \
-        --talosconfig /home/boss/talos/talosconfig \
-        config merge /home/boss/talos/scenarios/#{scenario}/talosconfig
-    "
-    action :nothing
-  end
 end
-
-=begin
-template '/usr/local/bin/mkvmlab.sh' do
-  source 'talos-netboot/mkvmlab.sh.erb'
-  mode '0755'
-  variables(
-    network: node['labinator']['network'],
-    nodes: node['labinator']['nodes'],
-  )
-end
-=end

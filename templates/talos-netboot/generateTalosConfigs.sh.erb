@@ -1,0 +1,60 @@
+#!/usr/bin/bash
+
+set -e
+
+<%
+    target_dir = "/home/boss/talos/scenarios/#{@scenario}"
+
+    # Filter out hypervisors and gather IPs
+    cluster_nodes = {}
+    controlplane_ips = []
+    all_ips = []
+    @nodes.each do |nodename, n|
+        case n['role']
+        when 'controlplane'
+            controlplane_ips << n['ip']
+            all_ips << n['ip']
+            cluster_nodes[nodename] = n
+        when 'worker'
+            all_ips << n['ip']
+            cluster_nodes[nodename] = n
+        end
+    end
+%>
+
+rm -f <%= target_dir %>/secrets.yaml <%= target_dir %>/talosconfig
+talosctl gen secrets -o <%= target_dir %>/secrets.yaml
+
+talosctl gen config <%= @scenario %> https://<%= @scenario %>.local:6443 \
+    --force \
+    --with-secrets "<%= target_dir %>/secrets.yaml" \
+    --config-patch @"<%= target_dir %>/patch-all.yaml" \
+    --output "<%= target_dir %>"
+
+<% cluster_nodes.each do |nodename, n| %>
+talosctl \
+    --talosconfig "<%= target_dir %>/talosconfig" \
+    machineconfig patch "<%= target_dir %>/<%= n['role'] %>.yaml" \
+    --patch @"<%= target_dir %>/patch-node-<%= nodename %>.yaml" \
+    -o "<%= target_dir %>/node-<%= nodename %>.yaml"
+cp "<%= target_dir %>/node-<%= nodename %>.yaml" "/var/www/html/nodes-ipxe/<%= @scenario %>"
+
+<% end %>
+
+talosctl \
+    --talosconfig "<%= target_dir %>/talosconfig" \
+    config endpoint <%= controlplane_ips.join(" ") %>
+
+talosctl \
+    --talosconfig "<%= target_dir %>/talosconfig" \
+    config node <%= all_ips.join(" ") %>
+
+set +e
+
+#Always ensure there's an active context aside from what is being worked on
+talosctl config add null
+talosctl config context null
+talosctl config remove --noconfirm <%= @scenario %>
+set -e
+
+talosctl config merge <%= target_dir %>/talosconfig

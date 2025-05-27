@@ -99,6 +99,10 @@ file '/etc/monitors/otelcol.yml' do
           - body.PRIORITY
           - body.SYSLOG_IDENTIFIER
           - body.MESSAGE
+        - id: setmessage
+          type: move
+          from: body.MESSAGE
+          to: body.message
 
       # Remote log messages
       tcplog:
@@ -180,7 +184,7 @@ file '/etc/monitors/otelcol.yml' do
         - id: setmessage
           type: move
           from: attributes.message
-          to: body.MESSAGE
+          to: body.message
         - id: setidentifier
           type: move
           from: attributes.appname

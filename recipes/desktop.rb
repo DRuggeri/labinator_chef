@@ -43,7 +43,7 @@ file '/etc/lightdm/lightdm.conf' do
     [Seat:*]
     autologin-guest=false
     autologin-user=boss
-    autologin-user-timeout=5
+    autologin-user-timeout=1
     autologin-in-background=false
     autologin-session=default
 

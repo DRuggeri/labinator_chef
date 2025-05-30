@@ -15,4 +15,4 @@ fi
 xrandr --output HDMI-1 --mode $HDMIMODE --rate 60.04 --primary --output eDP-1 --mode $HDMIMODE --rate 60.00 --below HDMI-1
 xinput map-to-output 10 HDMI-1
 xinput map-to-output 11 eDP-1
-unclutter -display :0 -grab -idle 1.0 &
+unclutter -display :0 -idle 2.0 &

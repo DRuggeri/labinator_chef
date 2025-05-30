@@ -57,6 +57,14 @@ file '/etc/lightdm/lightdm.conf' do
   notifies :restart, "service[lightdm]", :delayed
 end
 
+file '/etc/lightdm/lightdm-gtk-greeter.conf' do
+  content <<-EOF.gsub(/^    /, '')
+    [greeter]
+    background=#191919
+  EOF
+  notifies :restart, "service[lightdm]", :delayed
+end
+
 # Prepare Firefox to trust the local CA and set some basic prefs
 directory '/etc/firefox/policies'
 file '/etc/firefox/policies/policies.json' do
@@ -71,7 +79,7 @@ file '/etc/firefox/policies/policies.json' do
         "DisplayBookmarksToolbar": "newtab",
         "DisplayMenuBar": "default-off",
         "Homepage": {
-          "URL": "https://boss.local:3000/grafana/d/otelcol-contrib-hostmetrics/opentelemetry-collector-hostmetrics-node-exporter?kiosk=true&orgId=1&from=now-15m&to=now&timezone=browser&var-DS_PROMETHEUS=default&var-service_namespace=agent&var-host=boss&var-diskdevices=[a-z]%2B|nvme[0-9]%2Bn[0-9]%2B|mmcblk[0-9]%2B&refresh=5s",
+          "URL": "http://boss.local:8080/index.html",
           "Locked": true,
           "StartPage": "homepage"
         },

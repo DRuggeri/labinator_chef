@@ -12,6 +12,12 @@ group 'dialout' do
   append true
 end
 
+# So boss can watch the journal and read apache logs
+group 'adm' do
+  members 'boss'
+  append true
+end
+
 directory '/home/boss' do
   owner 'boss'
   group 'boss'
@@ -45,6 +51,7 @@ file '/etc/sudoers.d/boss' do
   content <<-EOF.gsub(/^    /, '')
     boss ALL=NOPASSWD: /usr/sbin/poweroff
     boss ALL=NOPASSWD: /usr/sbin/reboot
+    boss ALL=NOPASSWD: /usr/bin/tcpdump
   EOF
 end
 

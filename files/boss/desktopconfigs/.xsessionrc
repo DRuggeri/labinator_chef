@@ -12,7 +12,8 @@ else
     EDPMODE="1024x768"
 fi
 
-xrandr --output HDMI-1 --mode $HDMIMODE --rate 60.04 --primary --output eDP-1 --mode $HDMIMODE --rate 60.00 --below HDMI-1
+xrandr --output HDMI-1 --mode $HDMIMODE --rate 60.04 --primary --output eDP-1 --mode $EDPMODE --rate 60.00 --below HDMI-1
 xinput map-to-output 10 HDMI-1
 xinput map-to-output 11 eDP-1
+xset s off -dpms
 unclutter -display :0 -idle 2.0 &

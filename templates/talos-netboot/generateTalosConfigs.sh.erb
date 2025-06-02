@@ -22,7 +22,7 @@ set -e
     end
 %>
 
-rm -f <%= target_dir %>/secrets.yaml <%= target_dir %>/talosconfig
+rm -f <%= target_dir %>/secrets.yaml <%= target_dir %>/talosconfig <%= target_dir %>/node-*.yaml
 talosctl gen secrets -o <%= target_dir %>/secrets.yaml
 
 talosctl gen config <%= @scenario %> https://<%= @scenario %>.local:6443 \

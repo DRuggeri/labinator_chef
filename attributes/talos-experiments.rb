@@ -31,9 +31,9 @@ node.default['labinator']['talos']['scenarios'] = {
     if type == 'hybrid'
       num_workers = i * 3
       cp = {
-        "c1-#{type}" => node['labinator']['talos']['scenarios']['physical']['control-plane']['c1-physical'],
-        "c2-#{type}" => node['labinator']['talos']['scenarios']['physical']['control-plane']['c2-physical'],
-        "c3-#{type}" => node['labinator']['talos']['scenarios']['physical']['control-plane']['c3-physical'],
+        "c1-#{type}" => node['labinator']['network']['nodes']['node1'],
+        "c2-#{type}" => node['labinator']['network']['nodes']['node3'],
+        "c3-#{type}" => node['labinator']['network']['nodes']['node5'],
       }
       kvm = {
         'kvm-2' => node['labinator']['network']['nodes']['node2'],
@@ -41,7 +41,7 @@ node.default['labinator']['talos']['scenarios'] = {
         'kvm-6' => node['labinator']['network']['nodes']['node6'],
       }
     else
-      num_workers = i * 6
+      num_workers = (i * 6) - 3
       cp = {
         "c1-#{type}" => { 'ip' => '192.168.122.21', 'mac' => 'de:ad:be:ef:20:01' },
         "c2-#{type}" => { 'ip' => '192.168.122.22', 'mac' => 'de:ad:be:ef:20:02' },
@@ -93,10 +93,10 @@ node['labinator']['talos']['scenarios'].each do |type, cfg|
   elsif type.start_with?('virtual')
     hypervisors = [
       node['labinator']['network']['nodes']['node1'],
-      node['labinator']['network']['nodes']['node2'],
       node['labinator']['network']['nodes']['node3'],
-      node['labinator']['network']['nodes']['node4'],
       node['labinator']['network']['nodes']['node5'],
+      node['labinator']['network']['nodes']['node2'],
+      node['labinator']['network']['nodes']['node4'],
       node['labinator']['network']['nodes']['node6'],
     ]
   end

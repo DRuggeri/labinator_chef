@@ -121,6 +121,7 @@ end
 
 file '/etc/default/grub' do
   content <<-EOF.gsub(/^    /, '')
+    GRUB_BACKGROUND=''
     GRUB_DEFAULT=0
     GRUB_TIMEOUT=1
     GRUB_TIMEOUT_STYLE=hidden

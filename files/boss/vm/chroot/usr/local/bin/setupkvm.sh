@@ -45,4 +45,9 @@ EOF
     fi
 done
 
+# Inform boss that this node has been wiped (in case we are booting this OS just for that purpose)
+while ! wget -O - "http://boss.local:8080/callbacks?key=wipe&val=`hostname`" | grep received;do
+    sleep 2
+done
+
 curl -k -o /var/lib/libvirt/images/metal-amd64.iso https://boss.local/assets/metal-amd64.iso

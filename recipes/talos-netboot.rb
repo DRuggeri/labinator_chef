@@ -35,7 +35,10 @@ directory '/home/boss/talos' do
   group 'boss'
 end
 
-directory '/home/boss/talos/scenarios'
+directory '/home/boss/talos/scenarios' do
+  owner 'boss'
+  group 'boss'
+end
 
 file '/home/boss/talos/scenarios/configs.yaml' do
   content node['labinator']['talos']['scenario_config']

@@ -18,12 +18,14 @@ action :create do
 #Step certs
 #SEE: https://smallstep.com/docs/step-ca/renewal/#automated-renewal
 systemd_unit 'cert-renewer@.service' do
-  content <<-EOF.gsub(/^    /, '')
+  content <<-EOF.gsub(/^      /, '')
       [Unit]
       Description=Certificate renewer for %I
       After=network-online.target
       StartLimitIntervalSec=0
       ; PartOf=cert-renewer.target
+      After=step-ca.service
+      Requires=step-ca.service
 
       [Service]
       Type=oneshot
@@ -45,7 +47,7 @@ systemd_unit 'cert-renewer@.service' do
   end
 
   systemd_unit 'cert-renewer@.timer' do
-    content <<-EOF.gsub(/^    /, '')
+    content <<-EOF.gsub(/^      /, '')
       [Unit]
       Description=Timer for certificate renewal of %I
       ; PartOf=cert-renewer.target
@@ -68,6 +70,15 @@ systemd_unit 'cert-renewer@.service' do
 
     triggers_reload true
     action :create
+  end
+
+  directory "/etc/systemd/system/#{new_resource.name}.service.d"
+  file "/etc/systemd/system/#{new_resource.name}.service.d/override.conf" do
+    content <<-EOF.gsub(/^      /, '')
+      [Unit]
+      After=cert-renewer@#{new_resource.name}.service
+      Requires=cert-renewer@#{new_resource.name}.service
+    EOF
   end
 
   key_file = new_resource.key_file || "/etc/ssl/private/#{new_resource.name}.key"

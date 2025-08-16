@@ -21,7 +21,12 @@ file '/etc/step-ca/passphrase' do
   mode '0700'
 end
 
-execute 'STEPPATH=/etc/step-ca step ca init --name=lab --dns=boss.local --address=:9000 --deployment-type=standalone --provisioner=boss@ca.lab --password-file=/etc/step-ca/passphrase' do
+bash 'initialize step' do
+  code <<~EOF
+    export STEPPATH=/etc/step-ca
+    step ca init --name=lab --dns=boss.local --address=:9000 --deployment-type=standalone --provisioner=boss@ca.lab --password-file=/etc/step-ca/passphrase
+    step ca provisioner update "boss@ca.lab" --allow-renewal-after-expiry
+    EOF
   not_if { ::File.exist?('/etc/step-ca/certs/root_ca.crt') }
 end
 

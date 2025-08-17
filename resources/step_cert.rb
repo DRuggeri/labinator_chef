@@ -46,6 +46,32 @@ systemd_unit 'cert-renewer@.service' do
     action :create
   end
 
+  systemd_unit 'cert-startup-checker@.service' do
+  content <<-EOF.gsub(/^    /, '')
+      [Unit]
+      Description=Certificate renewer for %I before starting the service
+      After=network-online.target
+      StartLimitIntervalSec=0
+      ; PartOf=cert-renewer.target
+
+      [Service]
+      Type=oneshot
+      User=root
+
+      Environment=CERT_LOCATION=/etc/ssl/certs/%i.pem
+      Environment=KEY_LOCATION=/etc/ssl/private/%i.key
+
+      ExecCondition=/usr/local/bin/step certificate needs-renewal ${CERT_LOCATION}
+      ExecStart=/usr/local/bin/step --config=/etc/step-ca/config/defaults.json ca renew --force ${CERT_LOCATION} ${KEY_LOCATION}
+
+      [Install]
+      WantedBy=multi-user.target
+    EOF
+
+    triggers_reload true
+    action :create
+  end
+
   systemd_unit 'cert-renewer@.timer' do
     content <<-EOF.gsub(/^      /, '')
       [Unit]
@@ -76,8 +102,8 @@ systemd_unit 'cert-renewer@.service' do
   file "/etc/systemd/system/#{new_resource.name}.service.d/override.conf" do
     content <<-EOF.gsub(/^      /, '')
       [Unit]
-      After=cert-renewer@#{new_resource.name}.service
-      Requires=cert-renewer@#{new_resource.name}.service
+      After=cert-startup-checker@#{new_resource.name}.service
+      Requires=cert-startup-checker@#{new_resource.name}.service
     EOF
   end
 

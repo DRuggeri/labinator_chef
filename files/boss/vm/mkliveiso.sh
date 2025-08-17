@@ -45,6 +45,8 @@ done
 test -d /var/tmp/live || mkdir /var/tmp/live
 cd /var/tmp/live
 
+apt-get update
+
 if [ ! -f /usr/bin/lb ];then
     apt-get remove -y live-build
     apt-get install -y po4a gettext debhelper-compat arch-test debootstrap devscripts

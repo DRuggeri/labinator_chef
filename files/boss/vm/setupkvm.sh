@@ -6,6 +6,9 @@ for svc in libvirtd setupkvm;do
   test -f /etc/systemd/system/multi-user.target.wants/${svc}.service || ln -s /lib/systemd/system/${svc}.service /etc/systemd/system/multi-user.target.wants/${svc}.service
 done
 
+# Don't wait for shutdown of guests when powering off - not that it matters much!
+rm -f /etc/systemd/system/multi-user.target.wants/libvirt-guests.service
+
 test -f /etc/libvirt/qemu/networks/default.xml && cat /etc/libvirt/qemu/networks/default.xml
 echo '
 <network>

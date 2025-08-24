@@ -17,7 +17,8 @@ var updateDuration = 100 * time.Millisecond
 
 func main() {
 	mux := &sync.Mutex{}
-	counter := 0
+	okCounter := 0
+	nokCounter := 0 // Should pretty much always be OK?
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	if tmp, ok := os.LookupEnv("WS_TARGET"); ok {
 		wsTarget = tmp
@@ -25,7 +26,7 @@ func main() {
 
 	podname, _ := os.Hostname()
 
-	go func(*int) {
+	go func(*int, *int) {
 		for {
 			c, _, err := websocket.DefaultDialer.Dial(wsTarget, nil)
 			if err != nil {
@@ -36,10 +37,10 @@ func main() {
 			log.Info("Connected to websocket target", "target", wsTarget)
 			defer c.Close()
 
-			c.WriteMessage(websocket.TextMessage, []byte(podname))
+			c.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("server:%s", podname)))
 
 			for {
-				err = c.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("%d", counter)))
+				err = c.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf("%d,%d", okCounter, nokCounter)))
 				if err != nil {
 					log.Error("error writing to websocket", "error", err)
 					c.Close()
@@ -48,15 +49,16 @@ func main() {
 				time.Sleep(updateDuration)
 			}
 		}
-	}(&counter)
+	}(&okCounter, &nokCounter)
 
 	http.HandleFunc("/hit", func(w http.ResponseWriter, r *http.Request) {
 		mux.Lock()
-		counter++
+		okCounter++
 		mux.Unlock()
+		w.WriteHeader(http.StatusOK)
 	})
 	http.HandleFunc("/count", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "%d", counter)
+		fmt.Fprintf(w, `{ "OK": "%d", "NOK": "%d"}`, okCounter, nokCounter)
 	})
 
 	slog.Info("Starting counter server", "port", "8080", "target", wsTarget)

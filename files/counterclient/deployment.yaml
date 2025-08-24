@@ -1,0 +1,30 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: counterclient
+  labels:
+    app: counterclient
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: counterclient
+  template:
+    metadata:
+      labels:
+        app: counterclient
+    spec:
+      containers:
+      - name: counterclient-container
+        image: druggeri/counterclient:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app: counterclient
+              topologyKey: kubernetes.io/hostname

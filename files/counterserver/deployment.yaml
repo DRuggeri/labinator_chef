@@ -18,6 +18,7 @@ spec:
       containers:
       - name: counterserver-container
         image: druggeri/counterserver:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
       affinity:

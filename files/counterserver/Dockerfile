@@ -7,12 +7,12 @@ COPY go.mod .
 RUN go mod download
 
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o counter .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o counterserver .
 
 
 FROM scratch
-COPY --from=builder /app/counter /counter
+COPY --from=builder /app/counterserver /counterserver
 
 EXPOSE 8080
 
-CMD ["/counter"]
+CMD ["/counterserver"]

@@ -94,29 +94,43 @@ bash 'mirror images' do
   action :nothing
 end
 
-remote_directory '/home/boss/counterserver' do
-  source 'counterserver'
-  owner 'boss'
-  group 'boss'
-  files_owner 'boss'
-  files_group 'boss'
-  files_mode '0644'
-  mode '0755'
-  
-  action :create
-  notifies :run, 'bash[build counterserver]', :immediately
-end
+['counterclient', 'counterserver'].each do |app|
+  remote_directory "/home/boss/#{app}" do
+    source app
+    owner 'boss'
+    group 'boss'
+    files_owner 'boss'
+    files_group 'boss'
+    files_mode '0644'
+    mode '0755'
+    
+    action :create
+    notifies :run, "bash[build #{app}]", :immediately
+  end
 
-bash 'build counterserver' do
-  user 'boss'
-  group 'boss'
-  login true
-  code <<-EOH
-    cd /home/boss/counterserver
-    docker build --tag ghcr.io/druggeri/counterserver .
-    docker tag ghcr.io/druggeri/counterserver #{node['labinator']['network']['mirror_endpoint']}/druggeri/counterserver:latest
-    docker push #{node['labinator']['network']['mirror_endpoint']}/druggeri/counterserver:latest
-  EOH
-  live_stream true
-  action :nothing
+  bash "build #{app}" do
+    user 'boss'
+    group 'boss'
+    login true
+    code <<-EOH
+      cd /home/boss/#{app}
+      docker build --tag ghcr.io/druggeri/#{app} .
+      docker tag ghcr.io/druggeri/#{app} #{node['labinator']['network']['mirror_endpoint']}/druggeri/#{app}:latest
+      docker push #{node['labinator']['network']['mirror_endpoint']}/druggeri/#{app}:latest
+    EOH
+    live_stream true
+    action :nothing
+  end
+
+  bash "deploy #{app}" do
+    user 'boss'
+    group 'boss'
+    login true
+    code <<-EOH
+      cd /home/boss/#{app}
+      kubectl apply -f deployment.yaml
+    EOH
+    live_stream true
+    action :nothing
+  end
 end

@@ -108,6 +108,7 @@ node['labinator']['talos']['scenarios'].each do |type, cfg|
       'ip' => info['ip'],
       'mac' => info['mac'],
       'name' => name,
+      'nodename' => info['name'],
     }
 
     case name[0]

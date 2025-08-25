@@ -22,11 +22,13 @@ node.default['labinator']['network']['nodes'] = {
     'ip' => '192.168.122.1',
     'mac' => 'b2:28:26:90:65:df',
     'type' => 'network',
+    'name' => 'firewall',
   },
   'switch' => {
     'ip' => '192.168.122.2',
     'mac' => '00:28:72:00:07:02',
     'type' => 'network',
+    'name' => 'switch',
   },
   #'zeropi' => {
   #  'ip' => '192.168.122.5',
@@ -37,36 +39,43 @@ node.default['labinator']['network']['nodes'] = {
     'mac' => '16:09:01:1a:f1:a1',
     'type' => 'boss',
     'vnc' => 5900,
+    'name' => 'boss',
   },
   'node1' => {
     'ip' => '192.168.122.11',
     'mac' => '16:09:01:1a:f4:30',
     'type' => 'labnode',
+    'name' => 'node1',
   },
   'node2' => {
     'ip' => '192.168.122.12',
     'mac' => '16:09:01:1a:f1:a3',
     'type' => 'labnode',
+    'name' => 'node2',
   },
   'node3' => {
     'ip' => '192.168.122.13',
     'mac' => '16:09:01:1a:f3:55',
     'type' => 'labnode',
+    'name' => 'node3',
   },
   'node4' => {
     'ip' => '192.168.122.14',
     'mac' => '16:09:01:1a:f1:d8',
     'type' => 'labnode',
+    'name' => 'node4',
   },
   'node5' => {
     'ip' => '192.168.122.15',
     'mac' => '16:09:01:1a:f1:92',
     'type' => 'labnode',
+    'name' => 'node5',
   },
   'node6' => {
     'ip' => '192.168.122.16',
     'mac' => '16:09:01:1a:f4:d7',
     'type' => 'labnode',
+    'name' => 'node6',
   },
 }
 

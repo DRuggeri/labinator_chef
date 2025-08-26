@@ -85,6 +85,9 @@ file '/home/boss/kube/post-install.sh' do
     helm upgrade --install otelcol-contrib /home/boss/charts/opentelemetry-collector-#{node['labinator']['versions']['otelcolchart']}.tgz --timeout 5m --namespace kube-system -f /home/boss/kube/otelcol-values.yaml
     helm upgrade --install kube-prometheus-stack /home/boss/charts/kube-prometheus-stack-#{node['labinator']['versions']['kube-prometheus-stackchart']}.tgz --timeout 5m --namespace kube-prometheus-stack --create-namespace -f /home/boss/kube/kube-prometheus-stack-values.yaml
 
+    kubectl apply -f /home/boss/counterserver/deployment.yaml
+    kubectl apply -f /home/boss/counterclient/deployment.yaml
+
     LAB=`curl -sk #{node['labinator']['network']['labwatch_endpoint']}/getlab`
     echo "
     - targets:

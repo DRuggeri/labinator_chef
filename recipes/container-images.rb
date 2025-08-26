@@ -121,16 +121,4 @@ end
     live_stream true
     action :nothing
   end
-
-  bash "deploy #{app}" do
-    user 'boss'
-    group 'boss'
-    login true
-    code <<-EOH
-      cd /home/boss/#{app}
-      kubectl apply -f deployment.yaml
-    EOH
-    live_stream true
-    action :nothing
-  end
 end

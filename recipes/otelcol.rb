@@ -265,11 +265,10 @@ file '/etc/monitors/otelcol.yml' do
 
     exporters:
       file/tempfile:
-        path: /tmp/collector.out
+        path: /var/tmplog/otelcol.jsonl
         rotation:
-          max_megabytes: 5
-          max_days: 14
-          max_backups: 50
+          max_megabytes: 100
+          max_backups: 1
       prometheus:
         endpoint: ':9124'
         tls:
@@ -299,19 +298,19 @@ file '/etc/monitors/otelcol.yml' do
         logs:
           receivers: [ syslog ]
           processors: [ batch ]
-          exporters: [ otlphttp ]
+          exporters: [ otlphttp, file/tempfile ]
         logs/talos:
           receivers: [ tcplog ]
           processors: [ batch ]
-          exporters: [ otlphttp ]
+          exporters: [ otlphttp, file/tempfile ]
         logs/journald:
           receivers: [ journald ]
-          processors: [ filter, resourcedetection, batch ]
-          exporters: [ otlphttp ]
+          processors: [ filter, resourcedetection ]
+          exporters: [ otlphttp, file/tempfile ]
         logs/apacheaccess:
           receivers: [ filelog/apacheaccess ]
           processors: [ resourcedetection ]
-          exporters: [ otlphttp ]
+          exporters: [ otlphttp, file/tempfile ]
   EOU
   notifies :restart, "service[otelcol]", :delayed
 end
@@ -325,6 +324,8 @@ systemd_unit 'otelcol.service' do
     Requires=docker.service
 
     [Service]
+    ExecStartPre=/usr/bin/rm -f /var/tmplog/otelcol.jsonl
+    ExecStartPre=/usr/bin/touch /var/tmplog/otelcol.jsonl
     ExecStart=/usr/bin/otelcol-contrib --config=file:/etc/monitors/otelcol.yml
     Restart=on-failure
     TimeoutStopSec=5

@@ -157,6 +157,21 @@ user 'monitors' do
   shell '/usr/sbin/nologin'
 end
 
+directory '/var/tmplog' do
+  owner 'monitors'
+  group 'monitors'
+  mode '0755'
+end
+
+mount '/var/tmplog' do
+  device           'tmpfs'
+  enabled          true
+  fstype           'tmpfs'
+  mount_point      '/var/tmplog'
+  options          [ 'size=256m' ]
+  action           [ :enable, :mount ]
+end
+
 file '/etc/network/interfaces' do
   content '
 auto lo

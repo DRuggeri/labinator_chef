@@ -267,7 +267,7 @@ file '/etc/monitors/otelcol.yml' do
       file/tempfile:
         path: /var/tmplog/otelcol.jsonl
         rotation:
-          max_megabytes: 100
+          max_megabytes: 10
           max_backups: 1
       prometheus:
         endpoint: ':9124'
@@ -324,7 +324,7 @@ systemd_unit 'otelcol.service' do
     Requires=docker.service
 
     [Service]
-    ExecStartPre=/usr/bin/rm -f /var/tmplog/otelcol.jsonl
+    ExecStartPre=/usr/bin/rm -f /var/tmplog/otelcol*.jsonl
     ExecStartPre=/usr/bin/touch /var/tmplog/otelcol.jsonl
     ExecStart=/usr/bin/otelcol-contrib --config=file:/etc/monitors/otelcol.yml
     Restart=on-failure

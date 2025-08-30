@@ -3,6 +3,7 @@ node.default['labinator']['network']['kvm_netdev'] = 'enp1s0'
 
 node.default['labinator']['versions'] = {
   'prometheus' => '3.0.1',
+  'prometheus-node-exporter' => '1.9.1',
   'loki' => '3.3.0',
   'talos' => '1.9.1',
   'matchbox' => '0.11.0',

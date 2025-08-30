@@ -31,6 +31,10 @@ file '/etc/monitors/prometheus.yml' do
         static_configs:
           - targets:
             - boss:9090
+      - job_name: boss
+        static_configs:
+          - targets:
+            - boss:9100
       - job_name: loki
         scheme: https
         tls_config: *tls_config
@@ -112,7 +116,7 @@ systemd_unit 'prometheus.service' do
                 --config.file=/etc/prometheus.yml \\
                 --web.config.file=/etc/prometheus-web-config.yml \\
                 --enable-feature=promql-experimental-functions \\
-                --storage.tsdb.retention.time=5y \\
+                --storage.tsdb.retention.time=1d \\
                 --web.external-url=https://boss.local:9090/prometheus \\
                 --web.enable-admin-api
     Restart=on-failure

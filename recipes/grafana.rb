@@ -126,6 +126,7 @@ directory '/etc/grafana/provisioning/dashboards/files'
   'dashboard-hostmetrics.json',
   'dashboard-k8s-views-global.json',
   'dashboard-logs.json',
+  'dashboard-node-exporter-full.json',
   'dashboard-openwrt.json',
 ].each do |dashboard_file|
   cookbook_file "/etc/grafana/provisioning/dashboards/files/#{dashboard_file}" do

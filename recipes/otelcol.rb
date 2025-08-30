@@ -15,7 +15,7 @@ file '/etc/monitors/otelcol.yml' do
         config:
           scrape_configs:
           - job_name: otel-collector
-            scrape_interval: 5s
+            scrape_interval: 15s
             static_configs:
             - targets: [ '127.0.0.1:8889' ]
             metric_relabel_configs:
@@ -23,7 +23,7 @@ file '/etc/monitors/otelcol.yml' do
               regex: "service_instance_id|service_name"
 
       hostmetrics/agent:
-        collection_interval: 5s
+        collection_interval: 15s
         scrapers:
           cpu:
             metrics:
@@ -265,7 +265,7 @@ file '/etc/monitors/otelcol.yml' do
 
     exporters:
       file/tempfile:
-        path: /var/tmplog/otelcol.jsonl
+        path: /var/log/tmplog/otelcol.jsonl
         rotation:
           max_megabytes: 10
           max_backups: 1
@@ -324,8 +324,8 @@ systemd_unit 'otelcol.service' do
     Requires=docker.service
 
     [Service]
-    ExecStartPre=/usr/bin/rm -f /var/tmplog/otelcol*.jsonl
-    ExecStartPre=/usr/bin/touch /var/tmplog/otelcol.jsonl
+    ExecStartPre=/usr/bin/rm -f /var/log/tmplog/otelcol*.jsonl
+    ExecStartPre=/usr/bin/touch /var/log/tmplog/otelcol.jsonl
     ExecStart=/usr/bin/otelcol-contrib --config=file:/etc/monitors/otelcol.yml
     Restart=on-failure
     TimeoutStopSec=5

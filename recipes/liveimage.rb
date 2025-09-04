@@ -35,6 +35,12 @@ remote_directory '/var/tmp/kvmchroot' do
   notifies :run, 'execute[build KVM live ISO]', :immediately
 end
 
+remote_file '/var/tmp/kvmchroot/usr/local/bin/handytail' do
+  source 'https://github.com/DRuggeri/handytail/releases/download/v0.2.0/handytail-v0.2.0-linux-amd64'
+  mode '0755'
+  notifies :run, 'execute[build KVM live ISO]', :immediately
+end
+
 #rm -rf /var/www/html/assets/kvm-* /var/www/html/assets/kvm-live-image-amd64.iso /var/tmp/live/kvm-live-image-amd64.iso
 execute 'build KVM live ISO' do
   command '/usr/local/bin/mkliveiso.sh -f /var/tmp/live/kvm-live-image-amd64.iso -a -p "openssh-server curl wget bridge-utils ethtool libvirt-daemon-system libvirt-clients virt-viewer virtinst qemu-utils qemu-system-x86 dnsmasq tcpdump htop ntpsec ntpsec-ntpdate" -s /var/tmp/setupkvm.sh -c /var/tmp/kvmchroot'

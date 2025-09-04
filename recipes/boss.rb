@@ -29,6 +29,13 @@ directory '/home/boss/.ssh' do
   mode '0700'
 end
 
+file '/home/boss/.ssh/config' do
+  content <<-EOF.gsub(/^    /, '')
+    Host *
+      StrictHostKeyChecking no
+  EOF
+end
+
 execute 'create boss sshkey' do
   user 'boss'
   group 'boss'
@@ -93,6 +100,7 @@ end
   'sysstat',           #Troubleshooting
   'memstat',           #Troubleshooting
   'file',              #Troubleshooting
+  'dropwatch',         #Troubleshooting
   'iperf',             #Network throughput testing
   'iperf3',            #Network throughput testing
   'iftop',             #Network throughput monitoring
@@ -117,6 +125,15 @@ end
 ].each do |name|
   package name do
     action :install
+  end
+end
+
+{
+  'net.core.rmem_max'     => 16777216,
+  'net.core.rmem_default' =>  8388608,  
+}.each do |name, val|
+  sysctl name do
+    value val
   end
 end
 
@@ -157,17 +174,17 @@ user 'monitors' do
   shell '/usr/sbin/nologin'
 end
 
-directory '/var/tmplog' do
+directory '/var/log/tmplog' do
   owner 'monitors'
   group 'monitors'
   mode '0755'
 end
 
-mount '/var/tmplog' do
+mount '/var/log/tmplog' do
   device           'tmpfs'
   enabled          true
   fstype           'tmpfs'
-  mount_point      '/var/tmplog'
+  mount_point      '/var/log/tmplog'
   options          [ 'size=256m' ]
   action           [ :enable, :mount ]
 end
@@ -204,6 +221,9 @@ include_recipe 'labinator::apache'
 
 ##### Docker
 include_recipe 'labinator::docker'
+
+### Node Exporter
+include_recipe 'labinator::prometheus-node-exporter'
 
 ### Prometheus
 include_recipe 'labinator::prometheus'

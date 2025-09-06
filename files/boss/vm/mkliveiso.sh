@@ -72,7 +72,7 @@ for pkg in `echo "${PACKAGES}"`;do
 done
 
 perl -pi -e 's/ quiet splash//g' config/binary
-perl -pi -e 's/components/components console=ttyS0/g' config/binary
+perl -pi -e 's/components/components console=ttyS0 nomodeset/g' config/binary
 
 cp -r /usr/share/live/build/bootloaders/isolinux config/bootloaders/
 perl -pi -e 's/timeout [0-9]+/timeout 1/g' config/bootloaders/isolinux/isolinux.cfg

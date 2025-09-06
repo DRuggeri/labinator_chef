@@ -87,6 +87,7 @@ node['labinator']['talos']['scenarios'].each do |scenario, scenario_config|
           kernel /assets/kvm-debianlive-vmlinuz-amd64 initrd=kvm-debianlive-initrd-amd64.img \
             fetch=http://boss.local/assets/kvm-debianlive-filesystem-amd64.squashfs \
             boot=live components \
+            nomodeset \
             ip=dhcp \
             consoleblank=0 \
             console=tty0 \

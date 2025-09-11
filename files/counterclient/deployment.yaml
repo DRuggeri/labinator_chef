@@ -6,7 +6,7 @@ metadata:
   labels:
     app: counterclient
 spec:
-  replicas: 2
+  replicas: 3
   selector:
     matchLabels:
       app: counterclient
@@ -21,6 +21,13 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 8080
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -28,3 +35,8 @@ spec:
                 matchLabels:
                   app: counterclient
               topologyKey: kubernetes.io/hostname
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault

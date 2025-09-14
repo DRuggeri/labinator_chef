@@ -194,9 +194,9 @@ file '/etc/network/interfaces' do
 auto lo
 iface lo inet loopback
 
-auto enp1s0
-allow-hotplug enp1s0
-iface enp1s0 inet static
+auto enx00e04c687830
+allow-hotplug enx00e04c687830
+iface enx00e04c687830 inet static
   address 192.168.122.3/24
   gateway 192.168.122.1
 '

@@ -1,4 +1,4 @@
-package 'ntp'
+package 'ntpsec'
 
 file '/etc/ntpsec/ntp.conf' do
   content '

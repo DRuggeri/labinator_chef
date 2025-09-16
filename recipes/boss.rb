@@ -63,6 +63,28 @@ file '/etc/sudoers.d/boss' do
   EOF
 end
 
+execute 'Trust Chef key' do
+  command 'wget -O - https://packages.chef.io/chef.asc | gpg --dearmor > /usr/share/keyrings/chef-archive-keyring.gpg'
+  not_if { ::File.exist?('/usr/share/keyrings/chef-archive-keyring.gpg') }
+end
+
+file '/etc/apt/sources.list.d/chef-stable.sources' do
+  content <<-EOF.gsub(/^    /, '')
+    Types: deb
+    URIs: https://packages.chef.io/repos/apt/stable
+    Suites: bullseye
+    Components: main
+    Signed-By: /usr/share/keyrings/chef-archive-keyring.gpg
+  EOF
+  notifies :run, "execute[Update apt packages]", :immediately
+end
+
+file '/etc/apt/sources.list.d/chef-stable.list' do
+  action :delete
+  notifies :run, "execute[Update apt packages]", :immediately
+end
+
+# Chef setup
 service 'chef-client' do
   action [:disable, :stop]
 end
@@ -86,7 +108,7 @@ end
   'vim',               #Better editor
   'openssl',           #SSL, of course
   'ssl-cert',          #Adds standard ssl-cert group for automated certs
-  'dnsutils',          #BIND clients
+  'bind9-dnsutils',    #BIND clients
   'unzip',             #Compression
   'gzip',              #Compression
   'rsync',             #Remote file sync

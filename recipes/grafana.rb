@@ -17,8 +17,19 @@ checking_remote_file '/usr/share/keyrings/grafana.key' do
   check_interval 60 * 60 * 24 * 90
 end
 
+file '/etc/apt/sources.list.d/grafana.sources' do
+  content <<-EOF.gsub(/^    /, '')
+    Types: deb
+    URIs: https://apt.grafana.com
+    Suites: stable
+    Components: main
+    Signed-By: /usr/share/keyrings/grafana.key
+  EOF
+  notifies :run, "execute[Update apt packages]", :immediately
+end
+
 file '/etc/apt/sources.list.d/grafana.list' do
-  content 'deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com stable main'
+  action :delete
   notifies :run, "execute[Update apt packages]", :immediately
 end
 

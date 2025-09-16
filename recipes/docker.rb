@@ -14,9 +14,19 @@ execute 'Trust Docker key' do
   not_if { ::File.exist?('/usr/share/keyrings/docker-archive-keyring.gpg') }
 end
 
-arch = shell_out('dpkg --print-architecture').stdout.chomp
+file '/etc/apt/sources.list.d/docker.sources' do
+  content <<-EOF.gsub(/^    /, '')
+    Types: deb
+    URIs: https://download.docker.com/linux/debian
+    Suites: #{node['lsb']['codename']}
+    Components: stable
+    Signed-By: /usr/share/keyrings/docker-archive-keyring.gpg
+  EOF
+  notifies :run, "execute[Update apt packages]", :immediately
+end
+
 file '/etc/apt/sources.list.d/docker.list' do
-  content "deb [arch=#{arch} signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/debian #{node['lsb']['codename']} stable\n"
+  action :delete
   notifies :run, "execute[Update apt packages]", :immediately
 end
 

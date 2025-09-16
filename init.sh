@@ -13,12 +13,18 @@ apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y rsync wget apt-transport-https lsb-release gnupg
 
 REL=`lsb_release -sc`
-if [ "$REL" = "bookworm" ];then
+if [ "$REL" = "bookworm" -o "$REL" = "trixie" ];then
   REL="bullseye"
 fi
 
 wget -O - https://packages.chef.io/chef.asc | gpg --dearmor > /usr/share/keyrings/chef-archive-keyring.gpg
-echo "deb [signed-by=/usr/share/keyrings/chef-archive-keyring.gpg] https://packages.chef.io/repos/apt/stable $REL main" > /etc/apt/sources.list.d/chef-stable.list
+echo "Types: deb
+URIs: https://packages.chef.io/repos/apt/stable
+Suites: $REL
+Components: main
+Signed-By: /usr/share/keyrings/chef-archive-keyring.gpg
+" > /etc/apt/sources.list.d/chef-stable.sources
+rm -f /etc/apt/sources.list.d/chef-stable.list
 apt-get update
 
 

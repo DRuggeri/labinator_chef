@@ -59,7 +59,8 @@ file '/etc/sudoers.d/boss' do
   content <<-EOF.gsub(/^    /, '')
     boss ALL=NOPASSWD: /usr/sbin/poweroff
     boss ALL=NOPASSWD: /usr/sbin/reboot
-    boss ALL=NOPASSWD: /usr/bin/tcpdump
+    boss ALL=NOPASSWD: /usr/local/bin/labwatch-reliability-test-start.sh
+    boss ALL=NOPASSWD: /usr/local/bin/labwatch-reliability-test-stop.sh
   EOF
 end
 

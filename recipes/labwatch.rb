@@ -16,7 +16,23 @@ file '/etc/monitors/labwatch.yaml' do
     netboot-folder: /var/www/html/nodes-ipxe/
     netboot-link: lab
     port-watch-trace: false
+    reliability-test:
+      baseUrl: "http://boss.local:8080"
+      testInterval: 5
+      timeouts:
+        "init":                30
+        "secret gen":          150
+        "disk wipe":           235
+        "powerup":             60
+        "booting-hypervisors": 245
+        "booting-nodes":       235
+        "bootstrapping":       155
+        "finalizing":          255
+        "starting":            156
+      preCommand: "sudo /usr/local/bin/labwatch-reliability-test-start.sh"
+      postCommand: "sudo /usr/local/bin/labwatch-reliability-test-stop.sh"
   EOU
+  notifies :restart, 'service[labwatch]', :delayed
 end
 
 git '/root/go/src/github.com/DRuggeri/labinator_labwatch' do
@@ -56,4 +72,37 @@ end
 
 service 'labwatch' do
   action :start
+end
+
+file '/usr/local/bin/labwatch-reliability-test-start.sh' do
+  content <<-EOU.gsub(/^    /, '')
+    #!/bin/bash
+    pkill tcpdump
+    sleep 2
+
+    rm -rf /var/tmp/testcapture
+    mkdir /var/tmp/testcapture
+    chown boss:boss /var/tmp/testcapture
+
+    nohup /usr/bin/tcpdump \
+      -Z boss  \
+      -i enx00e04c687830 \
+      -C 100 -W 10 \
+      -s 96 \
+      -w /var/tmp/testcapture/test.pcap \
+      'not (dst host #{node['labinator']['network']['nodes']['boss']['ip']} and tcp dst port 22)
+        and
+       not (src host #{node['labinator']['network']['nodes']['boss']['ip']} and src port 22)
+      ' > /dev/null 2>&1 &
+    disown
+  EOU
+  mode '0755'
+end
+
+file '/usr/local/bin/labwatch-reliability-test-stop.sh' do
+  content <<-EOU.gsub(/^    /, '')
+    #!/bin/bash
+    pkill tcpdump
+  EOU
+  mode '0755'
 end

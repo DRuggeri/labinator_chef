@@ -43,7 +43,7 @@ end
 
 #rm -rf /var/www/html/assets/kvm-* /var/www/html/assets/kvm-live-image-amd64.iso /var/tmp/live/kvm-live-image-amd64.iso
 execute 'build KVM live ISO' do
-  command '/usr/local/bin/mkliveiso.sh -f /var/tmp/live/kvm-live-image-amd64.iso -a -p "openssh-server curl wget bridge-utils ethtool libvirt-daemon-system libvirt-clients virt-viewer virtinst qemu-utils qemu-system-x86 dnsmasq tcpdump htop ntpsec ntpsec-ntpdate" -s /var/tmp/setupkvm.sh -c /var/tmp/kvmchroot'
+  command '/usr/local/bin/mkliveiso.sh -f /var/tmp/live/kvm-live-image-amd64.iso -a -p "openssh-server curl wget bridge-utils ethtool libvirt-daemon-system libvirt-clients virt-viewer virtinst qemu-utils qemu-system-x86 virt-top dnsmasq tcpdump htop ntpsec ntpsec-ntpdate" -s /var/tmp/setupkvm.sh -c /var/tmp/kvmchroot'
   live_stream true
 
   action ::File.exist?('/var/tmp/live/kvm-live-image-amd64.iso') ? :nothing : :run

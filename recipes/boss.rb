@@ -177,6 +177,12 @@ execute 'update-grub' do
   action :nothing
 end
 
+file '/etc/vim/vimrc.local' do
+  content <<-EOF.gsub(/^    /, '')
+    set mouse=
+  EOF
+end
+
 [
   'charts',
   'talos',

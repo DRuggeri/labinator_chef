@@ -1,7 +1,13 @@
 file '/var/www/html/chain-boot.ipxe' do
-  content "#!ipxe
-chain nodes-ipxe/lab/${mac:hexhyp}.ipxe
-"
+  content <<-EOF.gsub(/^\s+/, '')
+    #!ipxe
+    syslog #{node['labinator']['network']['syslog']}
+
+    # If at first you don't succeed, try, try, try again
+    chain nodes-ipxe/lab/${mac:hexhyp}.ipxe
+    chain nodes-ipxe/lab/${mac:hexhyp}.ipxe
+    chain nodes-ipxe/lab/${mac:hexhyp}.ipxe
+  EOF
 end
 
 directory '/var/www/html/nodes-ipxe' do

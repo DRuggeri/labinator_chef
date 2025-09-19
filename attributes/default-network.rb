@@ -5,6 +5,7 @@ node.default['labinator']['network']['cidr'] = '/24'
 node.default['labinator']['network']['subnet'] = '192.168.122.0/24'
 node.default['labinator']['network']['dns'] = '192.168.122.3'
 node.default['labinator']['network']['ntp'] = '192.168.122.3'
+node.default['labinator']['network']['syslog'] = '192.168.122.3'
 
 node.default['labinator']['network']['dns_upstream'] = '192.168.0.1'
 node.default['labinator']['network']['dns_domain'] = 'local'

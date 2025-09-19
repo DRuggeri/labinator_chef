@@ -53,6 +53,7 @@ systemd_unit 'dnsmasq.service' do
       --dhcp-option=1,#{node['labinator']['network']['netmask']} \\
       --dhcp-option=3,#{node['labinator']['network']['gateway']} \\
       --dhcp-option=6,#{node['labinator']['network']['dns']} \\
+      --dhcp-option=7,#{node['labinator']['network']['syslog']} \\
       --dhcp-option=15,#{node['labinator']['network']['dns_domain']} \\
       --dhcp-option=42,#{node['labinator']['network']['ntp']} \\
       --dhcp-option=119,#{node['labinator']['network']['dns_domain']} \\

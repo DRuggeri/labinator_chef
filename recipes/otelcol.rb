@@ -146,38 +146,11 @@ file '/etc/monitors/otelcol.yml' do
           field: attributes.talos-level
 
 
-      syslog:
+      syslog/wally:
         tcp:
           listen_address: ':601'
-        udp:
-          listen_address: ':514'
         protocol: rfc3164
         operators:
-        - id: parserouter
-          type: router
-          routes:
-          - output: wallymessages
-            expr: 'attributes.appname != ""'
-          default: ipxesyslog
-
-        - id: ipxesyslog
-          type: add
-          field: 'resource["host.name"]'
-          value: ipxe
-        - id: setappname
-          type: add
-          field: attributes.appname
-          value: ipxe
-        - id: setlevel
-          type: add
-          field: attributes.priority
-          value: 27
-        - id: bodytomessage
-          type: move
-          from: body
-          to: attributes.message
-          output: keeper
-
         - id: wallymessages
           type: remove
           field: body
@@ -190,7 +163,6 @@ file '/etc/monitors/otelcol.yml' do
           from: attributes.appname
           to: 'resource["service.name"]'
 
-        ### Pipeline
         - id: keeper
           type: retain
           fields:
@@ -209,6 +181,40 @@ file '/etc/monitors/otelcol.yml' do
           type: move
           from: attributes.priority
           to: body.PRIORITY
+
+      syslog/ipxe:
+        udp:
+          listen_address: ':514'
+        protocol: rfc3164
+        operators:
+        - id: bodytoattrs
+          type: move
+          from: body
+          to: body.message
+#        - id: attrstobody
+#          type: move
+#          from: attributes.message
+#          to: body.message
+        - id: setipxehost
+          type: add
+          field: 'resource["host.name"]'
+          value: ipxe
+        - id: setipxeservice
+          type: add
+          field: 'resource["service.name"]'
+          value: ipxe
+        - id: setidentifier
+          type: add
+          field: body.SYSLOG_IDENTIFIER
+          value: ipxe
+        - id: setseveritynumber
+          type: add
+          field: 'body.["severity.number"]'
+          value: 27
+        - id: setseveritytext
+          type: add
+          field: 'body.["severity.text"]'
+          value: info
 
       # Local files
       filelog/apacheaccess:
@@ -308,8 +314,12 @@ file '/etc/monitors/otelcol.yml' do
           receivers: [prometheus/agent, hostmetrics/agent]
           processors: [attributes/agent, resourcedetection, transform]
           exporters: [ prometheus ]
-        logs:
-          receivers: [ syslog ]
+        logs/wally:
+          receivers: [ syslog/wally ]
+          processors: [ batch ]
+          exporters: [ otlphttp, file/tempfile ]
+        logs/ipxe:
+          receivers: [ syslog/ipxe ]
           processors: [ batch ]
           exporters: [ otlphttp, file/tempfile ]
         logs/talos:

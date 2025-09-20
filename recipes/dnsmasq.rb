@@ -30,10 +30,10 @@ directory '/var/lib/www/html' do
   recursive true
 end
 
-execute 'place pxe files' do
-  command 'cp /usr/lib/ipxe/ipxe.efi /usr/lib/ipxe/undionly.kpxe /var/www/html/'
-  not_if { ::File.exist?('/var/www/html/ipxe.efi') && ::File.exist?('/var/www/html/undionly.kpxe') }
-end
+#execute 'place pxe files' do
+#  command 'cp /usr/lib/ipxe/ipxe.efi /usr/lib/ipxe/undionly.kpxe /var/www/html/'
+#  not_if { ::File.exist?('/var/www/html/ipxe.efi') && ::File.exist?('/var/www/html/undionly.kpxe') }
+#end
 
 systemd_unit 'dnsmasq.service' do
   content <<-EOU.gsub(/^    /, '')

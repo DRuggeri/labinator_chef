@@ -149,14 +149,36 @@ file '/etc/monitors/otelcol.yml' do
       syslog:
         tcp:
           listen_address: ':601'
-          #tls:
-          #  cert_file: /etc/ssl/certs/otelcol.pem
-          #  key_file: /etc/ssl/private/otelcol.key
         udp:
           listen_address: ':514'
         protocol: rfc3164
         operators:
-        - id: killbody
+        - id: parserouter
+          type: router
+          routes:
+          - output: wallymessages
+            expr: 'attributes.appname != ""'
+          default: ipxesyslog
+
+        - id: ipxesyslog
+          type: add
+          field: 'resource["host.name"]'
+          value: ipxe
+        - id: setappname
+          type: add
+          field: attributes.appname
+          value: ipxe
+        - id: setlevel
+          type: add
+          field: attributes.priority
+          value: 27
+        - id: bodytomessage
+          type: move
+          from: body
+          to: attributes.message
+          output: keeper
+
+        - id: wallymessages
           type: remove
           field: body
         - id: setresourcehost
@@ -167,12 +189,6 @@ file '/etc/monitors/otelcol.yml' do
           type: copy
           from: attributes.appname
           to: 'resource["service.name"]'
-        - id: parserouter
-          type: router
-          default: keeper
-          routes:
-          #- output: filtersetpacketfields
-          #  expr: attributes.appname == "filterlog"
 
         ### Pipeline
         - id: keeper
@@ -193,9 +209,6 @@ file '/etc/monitors/otelcol.yml' do
           type: move
           from: attributes.priority
           to: body.PRIORITY
-        #- id: outputdumper
-        #  type: file_output
-        #  path: /tmp/collector.out
 
       # Local files
       filelog/apacheaccess:

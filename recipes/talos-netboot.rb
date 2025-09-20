@@ -1,7 +1,8 @@
 file '/var/www/html/chain-boot.ipxe' do
   content <<-EOF.gsub(/^\s+/, '')
     #!ipxe
-    syslog #{node['labinator']['network']['syslog']}
+    set syslog #{node['labinator']['network']['syslog']}
+    sync
 
     # If at first you don't succeed, try, try, try again
     chain nodes-ipxe/lab/${mac:hexhyp}.ipxe

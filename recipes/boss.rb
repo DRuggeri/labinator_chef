@@ -245,6 +245,9 @@ include_recipe 'labinator::step-ca'
 ##### DNS, TFTP, DHCP, etc
 include_recipe 'labinator::dnsmasq'
 
+##### IPXE custom build to include syslog
+include_recipe 'labinator::ipxe'
+
 ##### Apache httpd
 include_recipe 'labinator::apache'
 

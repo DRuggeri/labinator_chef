@@ -13,6 +13,7 @@
   end
 end
 
+# Use "dumb" bash command since git resource will detect changes to files in repo
 bash 'setup IPXE source' do
   code <<-EOF.gsub(/^    /, '')
     cd /usr/local/src
@@ -29,11 +30,16 @@ bash 'setup IPXE source' do
     echo "
     #undef CONSOLE_PCBIOS
     #define CONSOLE_PCBIOS CONSOLE_USAGE_ALL
-    
     #define CONSOLE_SYSLOG CONSOLE_USAGE_ALL
-    
     #undef LOG_LEVEL
     #define LOG_LEVEL LOG_ALL
+    " > config/local/console.h
+
+    echo "
+    #ifndef IMAGE_PNG
+    #define IMAGE_PNG
+    #endif
+    #define CONSOLE_CMD
     " > config/local/console.h
   EOF
   live_stream true
@@ -46,4 +52,26 @@ execute 'build ipxe' do
   live_stream true
   not_if { ::File.exist?('/usr/local/src/ipxe/src/bin-x86_64-efi/ipxe.efi') && ::File.exist?('/usr/local/src/ipxe/src/bin-x86_64-pcbios/undionly.kpxe') }
   action :run
+end
+
+file '/var/www/html/chain-boot.ipxe' do
+  content <<-EOF.gsub(/^\s+/, '')
+    #!ipxe
+    console --x 800 --y 600
+    console --picture http://boss.local/assets/bootimg.png
+
+    set syslog #{node['labinator']['network']['syslog']}
+    sync
+
+    # If at first you don't succeed, try, try, try again
+    chain nodes-ipxe/lab/${mac:hexhyp}.ipxe
+    chain nodes-ipxe/lab/${mac:hexhyp}.ipxe
+    chain nodes-ipxe/lab/${mac:hexhyp}.ipxe
+  EOF
+end
+
+cookbook_file '/var/www/html/assets/bootimg.png' do
+  source 'bootimg/logo-white.png'
+  mode '0755'
+  action :create
 end

@@ -30,5 +30,5 @@ else
   done
 
   echo "Executing converge..."
-  ssh -p $PORT root@$HOST "chef-solo -o 'labinator::$RECIPE'" 2>&1 | tee output
+  time ssh -p $PORT root@$HOST "chef-solo -o 'labinator::$RECIPE'" 2>&1 | tee output
 fi

@@ -1,0 +1,30 @@
+# Make a "meters" window at the top, running htop
+screen -t "meters" htop
+
+# Split the window horizontally, placing the new region at the bottom
+split
+
+# Resize the original top region so only the meters are visible
+resize -v 8
+
+# Switch focus to the new, empty bottom region
+focus down
+
+# Split the bottom region vertically into two sub-regions
+split -v
+
+# Focus on the right sub-region and launch top
+focus right
+screen -t "procs" top
+
+# Switch focus to the left-hand sub-region and launch virt-top.
+focus left
+screen -t "virt-top" virt-top
+
+# Split the left side again, horizontally this time, and launch journalctl
+split
+focus down
+screen -t "logs" journalctl -f
+
+# Switch back to the top window
+focus top

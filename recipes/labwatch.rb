@@ -43,6 +43,7 @@ end
 execute 'build labwatch' do
   command 'go build -o /usr/local/bin/labwatch'
   cwd '/root/go/src/github.com/DRuggeri/labinator_labwatch'
+  action :nothing
   notifies :restart, 'service[labwatch]', :delayed
 end
 

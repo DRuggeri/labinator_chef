@@ -24,6 +24,9 @@ machine:
     disabled: false
     servers:
       - <%= @network['ntp'] %>
+#  kubelet:
+#    extraArgs:
+#      node-status-update-frequency: 4s
   registries:
     mirrors:
       docker.io:
@@ -50,3 +53,10 @@ cluster:
         disabled: true
       service:
         disabled: true
+# This would make the network failure scenarios more responsive, but it causes
+# the nodes to fail to register in the control plane on bootstrap. Talos bug?
+#  controllerManager:
+#    extraArgs:
+#      node-monitor-period: 2s
+#      node-monitor-grace-period: 10s
+#      pod-eviction-timeout: 5s
